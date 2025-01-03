@@ -280,11 +280,13 @@
 
   <link name="rg2_rightfinger">
     <visual>
+      <origin rpy="3.141592653589793 0 0" xyz="0 0 0" />
       <geometry>
         <mesh filename="package://ur5_rg2/visual/rg2/finger.dae"/>
       </geometry>
     </visual>
     <collision>
+      <origin rpy="3.141592653589793 0 0" xyz="0 0 0" />
       <geometry>
         <mesh filename="package://ur5_rg2/collision/rg2/finger.stl"/>
       </geometry>
