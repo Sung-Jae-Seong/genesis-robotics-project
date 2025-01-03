@@ -1,9 +1,5 @@
 #TODO
-#get_joint(name=None, id=None)
-#get_joint.entity : property entity
-#get_joint.property dofs_motion_ang
 #separate the file system
-#add gripper
 
 import os
 import numpy as np
@@ -28,7 +24,7 @@ plane = scene.add_entity(gs.morphs.Plane())
 #panda = scene.add_entity(gs.morphs.MJCF(file='xml/franka_emika_panda/panda.xml'))
 m0609 = scene.add_entity(
     gs.morphs.URDF(
-        file='resource/m0609.urdf',
+        file='resource/m0609_gripper.urdf',
         fixed=True,
     ),
 )
@@ -47,6 +43,11 @@ jnt_names = [
 ]
 dofs_idx = [m0609.get_joint(name).dof_idx_local for name in jnt_names]
 
+gripper_names = [
+    'rg2_finger_joint1', #left
+    'rg2_finger_joint2', #right
+]
+gripper_idx = [m0609.get_joint(name).dof_idx_local for name in gripper_names]
 
 # set positional gains
 m0609.set_dofs_kp(
@@ -71,27 +72,45 @@ m0609.set_dofs_force_range(
 # 270°	- 4.71
 # 360°	- 6.28
 m0609.set_dofs_position(np.array([0, 0, 0, 0, 0, 0]), dofs_idx)
+m0609.set_dofs_position(np.array([0, 0]), gripper_idx)
+
 for i in range(750):
     if i == 0:
         m0609.control_dofs_position(
             np.array([0, 0, 0, 0, 0, 0]),
             dofs_idx,
         )
+        m0609.control_dofs_position(
+            np.array([0,0]),
+            gripper_idx,
+        )
     elif i == 250:
         m0609.control_dofs_position(
             np.array([0, 0, 1.57, 0, 1.57, 0]),
             dofs_idx,
+        )
+        m0609.control_dofs_position(
+            np.array([0.7,0.7]),
+            gripper_idx,
         )
     elif i == 500:
         m0609.control_dofs_position(
             np.array([0, 0, 0, 0, 0, 0]),
             dofs_idx,
         )
+        m0609.control_dofs_position(
+            np.array([0.0,0.0]),
+            gripper_idx,
+        )
     scene.step()
 
 while True:
     scene.step()
-    m0609.control_dofs_velocity(
+    m0609.control_dofs_position(
         np.array([0.0, 0, 0, 0, 0, 0]),
         dofs_idx,
     )
+    m0609.control_dofs_position(
+            np.array([0.0,0.0]),
+            gripper_idx,
+        )
