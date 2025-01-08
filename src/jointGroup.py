@@ -2,6 +2,7 @@ class JointGroup:
     def __init__(self, model, joint_names):
         self.model = model
         self.joint_indices = [self.model.get_joint(name).dof_idx_local for name in joint_names]
+        self.joint_num = len(self.joint_indices)
 
     def set_joint_kp(self, gains):
         self.model.set_dofs_kp(gains, self.joint_indices)

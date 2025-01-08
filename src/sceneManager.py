@@ -8,7 +8,7 @@ class SceneManager:
         self.show_viewer = show_viewer
         self.scene = gs.Scene(
             show_viewer=self.show_viewer,
-            sim_options=gs.options.SimOptions(dt=self.dt),
+            sim_options=gs.options.SimOptions(dt=self.dt, substeps=4),
         )
         self.entities = []
 

@@ -73,7 +73,7 @@
         iyz="-6.7892e-06"
         izz="0.29898"/>
     </inertial>
-          <collision>
+    <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
         <mesh filename="package://m0609_collision/MF0609_2_0.dae" scale="0.001 0.001 0.001" />
@@ -155,7 +155,7 @@
         iyz="-0.028996"
         izz="0.029763"/>
     </inertial>
-          <collision>
+    <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
         <mesh filename="package://m0609_collision/MF0609_4_0.dae" scale="0.001 0.001 0.001" />
@@ -238,74 +238,191 @@
   </link>
 
   <!-- Gripper -->
-  <link name="rg2_hand">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur5_rg2/visual/rg2/hand.dae"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://ur5_rg2/collision/rg2/hand.stl"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="ur5_hand_joint" type="fixed">
+  <joint name="base_fixed_joint" type="fixed">
     <parent link="link_6"/>
-    <child link="rg2_hand"/>
-    <origin xyz="0 0 0" rpy="1.570796325 -1.570796325 1.570796325"/>
+    <child link="hand_link"/>
+    <origin xyz="0.000 0.000 0.000" rpy="0 -1.571 0"/>
   </joint>
 
-  <link name="rg2_leftfinger">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur5_rg2/visual/rg2/finger.dae"/>
-      </geometry>
-    </visual>
+  <link name="hand_link">
     <collision>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
       <geometry>
-        <mesh filename="package://ur5_rg2/collision/rg2/finger.stl"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="rg2_finger_joint1" type="revolute">
-    <parent link="rg2_hand"/>
-    <child link="rg2_leftfinger"/>
-    <origin xyz="0.105 0.017 0" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10.6" lower="0.0" upper="1.18" velocity="1.57"/>
-  </joint>
-
-  <link name="rg2_rightfinger">
-    <visual>
-      <origin rpy="3.141592653589793 0 0" xyz="0 0 0" />
-      <geometry>
-        <mesh filename="package://ur5_rg2/visual/rg2/finger.dae"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin rpy="3.141592653589793 0 0" xyz="0 0 0" />
-      <geometry>
-        <mesh filename="package://ur5_rg2/collision/rg2/finger.stl"/>
+        <mesh filename="package://rg2_meshes/collision/RG2_Hand_col.STL"/>
       </geometry>
       <surface>
         <contact>
           <lateral_friction value="0.8"/>
-          <rolling_friction value="0.1"/>
-          <spinning_friction value="0.05"/>
+          <rolling_friction value="0.5"/>
+          <spinning_friction value="0.5"/>
         </contact>
       </surface>
     </collision>
+    <visual>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+        <mesh filename="package://rg2_meshes/visual/RG2_Hand_vis.STL"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="0.061902 0.000129 -0.000005" rpy="0.00 0.00 0.00"/>
+      <mass value="1.684558"/>
+      <inertia ixx="0.000862" ixy="0.000000" ixz="0.000000"
+              iyy="0.002401" iyz="-0.000001"
+              izz="0.002620" />
+    </inertial>
   </link>
 
-  <joint name="rg2_finger_joint2" type="revolute">
-    <parent link="rg2_hand"/>
-    <child link="rg2_rightfinger"/>
-    <origin xyz="0.105 -0.017 0" rpy="0 0 0"/>
-    <axis xyz="0 0 -1"/>
-    <limit effort="10.6" lower="0.0" upper="1.18" velocity="1.57"/>
+  <joint name="l_finger_1_joint" type="revolute">
+    <parent link="hand_link"/>
+    <child link="l_moment_arm_link"/>
+    <origin xyz="0.105 0.017 0.010" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit velocity="3.14" effort="10.6" lower="-0.45" upper="0.45" />
+    <dynamics damping="0.1" friction="0.0" />
   </joint>
+
+  <link name="l_moment_arm_link">
+    <collision>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+        <mesh filename="package://rg2_meshes/collision/RG2_LeftMomentArm_col.STL"/>
+      </geometry>
+      <surface>
+        <contact>
+          <lateral_friction value="0.8"/>
+          <rolling_friction value="0.5"/>
+          <spinning_friction value="0.5"/>
+        </contact>
+      </surface>
+    </collision>
+    <visual>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+        <mesh filename="package://rg2_meshes/visual/RG2_LeftMomentArm_vis.STL"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="0.017004 0.006397 -0.010300" rpy="0.00 0.00 0.00"/>
+      <mass value="0.160209"/>
+      <inertia ixx="0.000023" ixy="0.000019" ixz="0.000000"
+              iyy="0.000072" iyz="0.000000"
+              izz="0.000083" />
+    </inertial>
+  </link>
+
+  <joint name="l_finger_2_joint" type="revolute">
+    <parent link="l_moment_arm_link"/>
+    <child link="l_finger_link"/>
+    <origin xyz="0.049 0.026 0.000" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit velocity="3.14" effort="10.6" lower="-0.45" upper="0.45" />
+    <dynamics damping="0.1" friction="0.0" />
+  </joint>
+
+  <link name="l_finger_link">
+    <collision>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+        <mesh filename="package://rg2_meshes/collision/RG2_LeftFinger_col.STL"/>
+      </geometry>
+      <surface>
+        <contact>
+          <lateral_friction value="0.8"/>
+          <rolling_friction value="0.5"/>
+          <spinning_friction value="0.5"/>
+        </contact>
+      </surface>
+    </collision>
+    <visual>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+        <mesh filename="package://rg2_meshes/visual/RG2_LeftFinger_vis.STL"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="0.024695 -0.010178 -0.010001" rpy="0.00 0.00 0.00"/>
+      <mass value="0.081638"/>
+      <inertia ixx="0.000006" ixy="-0.000005" ixz="0.000000"
+              iyy="0.000025" iyz="0.000000"
+              izz="0.000026" />
+    </inertial>
+  </link>
+  
+  <joint name="r_finger_1_joint" type="revolute">
+    <parent link="hand_link"/>
+    <child link="r_moment_arm_link"/>
+    <origin xyz="0.105 -0.017 0.010" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit velocity="3.14" effort="10.6" lower="-0.45" upper="0.45" />
+    <dynamics damping="0.1" friction="0.0" />
+  </joint>
+
+  <link name="r_moment_arm_link">
+    <collision>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+        <mesh filename="package://rg2_meshes/collision/RG2_RightMomentArm_col.STL"/>
+      </geometry>
+      <surface>
+        <contact>
+          <lateral_friction value="0.8"/>
+          <rolling_friction value="0.5"/>
+          <spinning_friction value="0.5"/>
+        </contact>
+      </surface>
+    </collision>
+    <visual>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+        <mesh filename="package://rg2_meshes/visual/RG2_RightMomentArm_vis.STL"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="0.017004 -0.006397 -0.010300" rpy="0.00 0.00 0.00"/>
+      <mass value="0.160209"/>
+      <inertia ixx="0.000023" ixy="-0.000019" ixz="0.000000"
+              iyy="0.000072" iyz="0.000000"
+              izz="0.000083" />
+    </inertial>
+  </link>
+
+  <joint name="r_finger_2_joint" type="revolute">
+    <parent link="r_moment_arm_link"/>
+    <child link="r_finger_link"/>
+    <origin xyz="0.049 -0.026 0.000" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit velocity="3.14" effort="10.6" lower="-0.45" upper="0.45" />
+    <dynamics damping="0.1" friction="0.0" />
+  </joint>
+
+  <link name="r_finger_link">
+    <collision>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+          <mesh filename="package://rg2_meshes/collision/RG2_RightFinger_col.STL"/>
+      </geometry>
+      <surface>
+        <contact>
+          <lateral_friction value="0.8"/>
+          <rolling_friction value="0.5"/>
+          <spinning_friction value="0.5"/>
+        </contact>
+      </surface>
+    </collision>
+    <visual>
+      <origin xyz="0.00 0.00 0.00" rpy="0.00 0.00 0.00"/>
+      <geometry>
+          <mesh filename="package://rg2_meshes/visual/RG2_RightFinger_vis.STL"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="0.024695 0.010178 -0.010000" rpy="0.00 0.00 0.00"/>
+      <mass value="0.081637"/>
+      <inertia ixx="0.000006" ixy="0.000005" ixz="0.000000"
+              iyy="0.000025" iyz="0.000000"
+              izz="0.000026" />
+    </inertial>
+  </link>
 
 </robot>
