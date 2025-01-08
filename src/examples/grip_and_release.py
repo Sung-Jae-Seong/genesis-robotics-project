@@ -1,26 +1,21 @@
 ######## Environment Setting
 import os
-os.environ['PYOPENGL_PLATFORM'] = 'glx' #before import sceneManager
-
-import sys ## For source load
-src_path = '/home/sjs/genesis/src'
-if src_path not in sys.path:
-    sys.path.append(src_path)
-if 'PYTHONPATH' in os.environ:  
-    os.environ['PYTHONPATH'] += f':{src_path}'
-else:
-    os.environ['PYTHONPATH'] = src_path
+os.environ['PYOPENGL_PLATFORM'] = 'glx'
 
 import numpy as np
 import torch
-from sceneManager import SceneManager
-from robotEntity import RobotEntity
-
 
 ######## Init Genesis / Generate scene
 import genesis as gs
+gs.init(backend=gs.cpu)
 
-scene = SceneManager()
+scene = gs.Scene(
+    show_viewer=True,
+    sim_options = gs.options.SimOptions(
+        dt = 0.01,
+        substeps=4,
+    ),
+)
 
 plane = scene.add_entity(gs.morphs.Plane())
 cube = scene.add_entity(gs.morphs.Box(size=(0.03, 0.03, 0.05), pos=(0.7, 0.0, 0.025)))
@@ -36,7 +31,7 @@ m0609.set_friction(0.1)
 scene.build()
 
 
-########
+######## Joint Definition
 
 jnt_names = [
     'joint_1',
@@ -52,67 +47,89 @@ gripper_names = [
     'r_finger_1_joint',
     'r_finger_2_joint',
 ]
-robot = RobotEntity(m0609)
 
-robot.init_arm(jnt_names)
-robot.init_hand(gripper_names)
+arm_idx = [m0609.get_joint(name).dof_idx_local for name in jnt_names]
+gripper_idx = [m0609.get_joint(name).dof_idx_local for name in gripper_names]
 
-robot.Arm.set_joint_kp(np.array([4500*0.7, 4500*0.7, 3500*0.7, 3500*0.7, 2000*0.7, 2000*0.7]))
-robot.Hand.set_joint_kp(np.array([2000, 2000, 2000, 2000]))
+m0609.set_dofs_kp(
+    kp = np.array([4500*0.7, 4500*0.7, 3500*0.7, 3500*0.7, 2000*0.7, 2000*0.7]),
+    dofs_idx_local = arm_idx,
+)
+m0609.set_dofs_kp(
+    kp = np.array([2000, 2000, 2000, 2000]),
+    dofs_idx_local = gripper_idx,
+)
+m0609.set_dofs_kv(
+    kv = np.array([500, 500, 450, 450, 400, 400]),
+    dofs_idx_local = arm_idx,
+)
+m0609.set_dofs_kv(
+    kv = np.array([1000, 1000, 1000, 1000]),
+    dofs_idx_local = gripper_idx,
+)
+m0609.set_dofs_force_range(
+    lower = np.array([-87, -87, -87, -87, -12, -12]),
+    upper = np.array([ 87,  87,  87,  87,  12,  12]),
+    dofs_idx_local = arm_idx,
+)
 
-robot.Arm.set_joint_vel(np.array([500*0.7, 500*0.7, 450*0.7, 450*0.7, 400*0.7, 400*0.7]))
-robot.Hand.set_joint_vel(np.array([1000, 1000, 1000, 1000]))
+HAND_OPEN = np.array([0.45, 0.045, -0.45, -0.045])
+HAND_CLOSE = np.array([-0.11, -0.011, 0.11, 0.011])
 
-robot.Arm.set_position(np.array([0, 0, 0, 0, 0, 0]))
-robot.Hand.set_position(np.array(robot.Hand.open_joint))
+m0609.set_dofs_position(np.array([0, 0, 0, 0, 0, 0]), arm_idx)
+m0609.set_dofs_position(np.array(HAND_OPEN), gripper_idx)
 
-end_effector = robot.model.get_link('link_6')
+end_effector = m0609.get_link('link_6')
+
 
 #init
-robot.Hand.open()
-qpos = robot.model.inverse_kinematics(
+qpos = m0609.inverse_kinematics(
     link = end_effector,
     pos  = np.array([0.7, 0.0, 0.3]),
     quat = np.array([0, 1, 0, 0]),
 )
-qpos[6:] = torch.tensor(robot.Hand.open_joint)
-path = robot.model.plan_path(
+qpos[6:] = torch.tensor(HAND_OPEN)
+path = m0609.plan_path(
     qpos_goal     = qpos,
     num_waypoints = 200, # 2s duration
 )
 for waypoint in path:
-    robot.Arm.control_position(waypoint[:6])
-    robot.Hand.control_position(waypoint[6:])
-    scene.step()
-
-for i in range(100):
+    m0609.control_dofs_position(
+        waypoint[:6],
+        arm_idx,
+    )
+    m0609.control_dofs_position(
+        waypoint[6:],
+        gripper_idx,
+    )
     scene.step()
 
 # reach
-qpos = robot.model.inverse_kinematics(
+qpos = m0609.inverse_kinematics(
     link = end_effector,
     pos  = np.array([0.7, 0.0, 0.25]),
     quat = np.array([0, 1, 0, 0]),
 )
-robot.Arm.control_position(qpos[:6])
+m0609.control_dofs_position(qpos[:6], arm_idx)
 for i in range(100):
     scene.step()
 print("reach is done")
 
 # grasp
-robot.Hand.close()
+m0609.control_dofs_position(HAND_CLOSE, gripper_idx)
 for i in range(100):
     scene.step()
 print("grasp is done")
 
 # lift
-qpos = robot.model.inverse_kinematics(
+qpos = m0609.inverse_kinematics(
     link=end_effector,
-    pos=np.array([0.7, 0.0, 0.3]),
+    pos=np.array([0.7, 0.0, 0.35]),
     quat=np.array([0, 1, 0, 0]),
 )
-robot.Arm.control_position(qpos[:6])
-robot.Hand.close()
+m0609.control_dofs_position(qpos[:6], arm_idx)
+m0609.control_dofs_position(HAND_CLOSE, gripper_idx)
+
 for i in range(200):
     scene.step()
 print("lift is done")

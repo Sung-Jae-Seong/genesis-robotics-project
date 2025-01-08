@@ -1,31 +1,26 @@
-#TODO : test : urdf rewrite
-
 ######## Environment Setting
 import os
-os.environ['PYOPENGL_PLATFORM'] = 'glx' #before import sceneManager
-
-import sys ## For source load
-src_path = '/home/sjs/genesis/src'
-if src_path not in sys.path:
-    sys.path.append(src_path)
-if 'PYTHONPATH' in os.environ:  
-    os.environ['PYTHONPATH'] += f':{src_path}'
-else:
-    os.environ['PYTHONPATH'] = src_path
-
 import numpy as np
-from sceneManager import SceneManager
-from robotEntity import RobotEntity
+
+os.environ['PYOPENGL_PLATFORM'] = 'glx'
+
 
 ######## Init Genesis / Generate scene
 import genesis as gs
+gs.init(backend=gs.cpu)
 
-scene = SceneManager()
+scene = gs.Scene(
+    show_viewer=True,
+    sim_options = gs.options.SimOptions(
+        dt = 0.01,
+    ),
+)
 
 plane = scene.add_entity(gs.morphs.Plane())
+#panda = scene.add_entity(gs.morphs.MJCF(file='xml/franka_emika_panda/panda.xml'))
 m0609 = scene.add_entity(
     gs.morphs.URDF(
-        file='/home/sjs/genesis/resource/m0609_gripper2.urdf',
+        file='/home/sjs/genesis/resource/m0609_gripper.urdf',
         fixed=True,
     ),
 )
@@ -33,7 +28,7 @@ m0609 = scene.add_entity(
 scene.build()
 
 
-########
+######## Joint Definition
 
 jnt_names = [
     'joint_1',
@@ -43,48 +38,82 @@ jnt_names = [
     'joint_5',
     'joint_6',
 ]
+dofs_idx = [m0609.get_joint(name).dof_idx_local for name in jnt_names]
+
 gripper_names = [
-    'l_finger_1_joint', # joint_value > 0 : open
-    'l_finger_2_joint',
-    'r_finger_1_joint', # joint_value < 0 : open
-    'r_finger_2_joint',
+    'rg2_finger_joint1', #left
+    'rg2_finger_joint2', #right
 ]
-robot = RobotEntity(m0609)
+gripper_idx = [m0609.get_joint(name).dof_idx_local for name in gripper_names]
 
-robot.init_arm(jnt_names)
-robot.init_hand(gripper_names)
 
-robot.Arm.set_joint_kp(np.array([4500*0.7, 4500*0.7, 3500*0.7, 3500*0.7, 2000*0.7, 2000*0.7]))
-robot.Hand.set_joint_kp(np.array([1000, 1000, 1000, 1000]))
 
-robot.Arm.set_joint_vel(np.array([500*0.7, 500*0.7, 450*0.7, 450*0.7, 400*0.7, 400*0.7]))
-robot.Hand.set_joint_vel(np.array([500*0.5, 500*0.5, 500*0.5, 500*0.5]))
+######## Joint Init / Setting
 
-robot.Arm.set_position(np.array([0, 0, 0, 0, 0, 0]))
-robot.Hand.set_position(np.array(robot.Hand.open_joint))
+# set positional gains
+m0609.set_dofs_kp(
+    kp             = np.array([4500*0.7, 4500*0.7, 3500*0.7, 3500*0.7, 2000*0.7, 2000*0.7]),
+    dofs_idx_local = dofs_idx,
+)
+# set velocity gains
+m0609.set_dofs_kv(
+    kv = np.array([500, 500, 450, 450, 400, 400]),
+    dofs_idx_local = dofs_idx,
+)
+# set force range for safety
+m0609.set_dofs_force_range(
+    lower          = np.array([-87, -87, -87, -87, -12, -12]),
+    upper          = np.array([ 87,  87,  87,  87,  12,  12]),
+    dofs_idx_local = dofs_idx,
+)
 
+
+######## Main
+# 90°	- 1.57
+# 180°	- 3.14
+# 270°	- 4.71
+# 360°	- 6.28
+
+m0609.set_dofs_position(np.array([0, 0, 0, 0, 0, 0]), dofs_idx)
+m0609.set_dofs_position(np.array([0, 0]), gripper_idx)
 
 for i in range(750):
     if i == 0:
-        robot.Arm.control_position(
+        m0609.control_dofs_position(
             np.array([0, 0, 0, 0, 0, 0]),
+            dofs_idx,
         )
-        robot.Hand.close()
+        m0609.control_dofs_position(
+            np.array([0,0]),
+            gripper_idx,
+        )
     elif i == 250:
-        robot.Arm.control_position(
+        m0609.control_dofs_position(
             np.array([0, 0, 1.57, 0, 1.57, 0]),
+            dofs_idx,
         )
-        robot.Hand.open()
+        m0609.control_dofs_position(
+            np.array([0.7,0.7]),
+            gripper_idx,
+        )
     elif i == 500:
-        robot.Arm.control_position(
+        m0609.control_dofs_position(
             np.array([0, 0, 0, 0, 0, 0]),
+            dofs_idx,
         )
-        robot.Hand.close()
+        m0609.control_dofs_position(
+            np.array([0.0,0.0]),
+            gripper_idx,
+        )
     scene.step()
 
 while True:
     scene.step()
-    robot.Arm.control_position(
+    m0609.control_dofs_position(
         np.array([0.0, 0, 0, 0, 0, 0]),
+        dofs_idx,
     )
-    robot.Hand.close()
+    m0609.control_dofs_position(
+            np.array([0.0,0.0]),
+            gripper_idx,
+        )
