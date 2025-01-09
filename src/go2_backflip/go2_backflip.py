@@ -5,12 +5,13 @@ import os
 import pickle
 
 import torch
-from go2_env import Go2Env
-
-import genesis as gs
 
 import os
 os.environ['PYOPENGL_PLATFORM'] = 'glx' #before scene
+
+from go2_env import Go2Env
+import genesis as gs
+
 
 def get_cfgs():
     env_cfg = {

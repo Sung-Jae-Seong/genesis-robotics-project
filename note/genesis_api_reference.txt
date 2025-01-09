@@ -1,0 +1,273 @@
+#Scene
+class genesis.engine.scene.Scene(*args, **kwargs)[source]
+A genesis.Scene object wraps all components in a simulation environment, including a simulator (containing multiple physics solvers), entities, and a visualizer (controlling both the viewer and all the cameras). Basically, everything happens inside a scene.
+
+Parameters
+:
+sim_options (gs.options.SimOptions) – The options configuring the overarching simulator, which in turn manages all the solvers.
+
+coupler_options (gs.options.CouplerOptions) – The options configuring the coupler between different solvers.
+
+tool_options (gs.options.ToolOptions) – The options configuring the tool_solver (scene.sim.ToolSolver).
+
+rigid_options (gs.options.RigidOptions) – The options configuring the rigid_solver (scene.sim.RigidSolver).
+
+avatar_options (gs.options.AvatarOptions) – The options configuring the avatar_solver (scene.sim.AvatarSolver).
+
+mpm_options (gs.options.MPMOptions) – The options configuring the mpm_solver (scene.sim.MPMSolver).
+
+sph_options (gs.options.SPHOptions) – The options configuring the sph_solver (scene.sim.SPHSolver).
+
+fem_options (gs.options.FEMOptions) – The options configuring the fem_solver (scene.sim.FEMSolver).
+
+sf_options (gs.options.SFOptions) – The options configuring the sf_solver (scene.sim.SFSolver).
+
+pbd_options (gs.options.PBDOptions) – The options configuring the pbd_solver (scene.sim.PBDSolver).
+
+vis_options (gs.options.VisOptions) – The options configuring the visualization system (scene.visualizer). Visualizer controls both the interactive viewer and the cameras.
+
+viewer_options (gs.options.ViewerOptions) – The options configuring the viewer (scene.visualizer.viewer).
+
+renderer (gs.renderers.Renderer) – The renderer used by camera for rendering images. This doesn’t affect the behavior of the interactive viewer.
+
+show_viewer (bool) – Whether to show the interactive viewer. Set it to False if you only need headless rendering.
+
+show_FPS (bool) – Whether to show the FPS in the terminal.
+
+add_entity(morph, material=None, surface=None, visualize_contact=False, vis_mode=None)[source]
+Add an entity to the scene.
+
+Parameters
+:
+morph (gs.morphs.Morph) – The morph of the entity.
+
+material (gs.materials.Material | None, optional) – The material of the entity. If None, use gs.materials.Rigid().
+
+surface (gs.surfaces.Surface | None, optional) – The surface of the entity. If None, use gs.surfaces.Default().
+
+visualize_contact (bool) – Whether to visualize contact forces applied to this entity as arrows in the viewer and rendered images. Note that this will not be displayed in images rendered by camera using the RayTracer renderer.
+
+vis_mode (str | None, optional) – The visualization mode of the entity. This is a handy shortcut for setting surface.vis_mode without explicitly creating a surface object.
+
+Returns
+:
+entity – The created entity.
+
+Return type
+:
+genesis.Entity
+
+build(n_envs=0, env_spacing=(0.0, 0.0), n_envs_per_row=None, center_envs_at_origin=True, compile_kernels=True)[source]
+Builds the scene once all entities have been added. This operation is required before running the simulation.
+
+Parameters
+:
+n_envs (int) – Number of parallel environments to create. If n_envs is 0, the scene will not have a batching dimension. If n_envs is greater than 0, the first dimension of all the input and returned states will be the batch dimension.
+
+env_spacing (tuple of float, shape (2,)) – The spacing between adjacent environments in the scene. This is for visualization purposes only and does not change simulation-related poses.
+
+n_envs_per_row (int) – The number of environments per row for visualization. If None, it will be set to sqrt(n_envs).
+
+center_envs_at_origin (bool) – Whether to put the center of all the environments at the origin (for visualization only).
+
+compile_kernels (bool) – Whether to compile the simulation kernels inside build(). If False, the kernels will not be compiled (or loaded if found in the cache) until the first call of scene.step(). This is useful for cases you don’t want to run the actual simulation, but rather just want to visualize the created scene.
+
+
+step(update_visualizer=True)[source]
+Runs a simulation step forward in time.
+
+
+set_dofs_velocity(velocity, dofs_idx_local=None, envs_idx=None)[source]
+Set the entity’s dofs’ velocity.
+
+Parameters
+:
+velocity (array_like) – The velocity to set.
+
+dofs_idx_local (None | array_like, optional) – The indices of the dofs to set. If None, all dofs will be set. Note that here this uses the local q_idx, not the scene-level one. Defaults to None.
+
+envs_idx (None | array_like, optional) – The indices of the environments. If None, all environments will be considered. Defaults to None.
+
+
+set_dofs_position(position, dofs_idx_local=None, zero_velocity=True, envs_idx=None)[source]
+Set the entity’s dofs’ position.
+
+Parameters
+:
+position (array_like) – The position to set.
+
+dofs_idx_local (None | array_like, optional) – The indices of the dofs to set. If None, all dofs will be set. Note that here this uses the local q_idx, not the scene-level one. Defaults to None.
+
+zero_velocity (bool, optional) – Whether to zero the velocity of all the entity’s dofs. Defaults to True. This is a safety measure after a sudden change in entity pose.
+
+envs_idx (None | array_like, optional) – The indices of the environments. If None, all environments will be considered. Defaults to None.
+
+
+set_dofs_kv(kv, dofs_idx_local=None)[source]
+Set the entity’s dofs’ velocity gains for the PD controller.
+
+Parameters
+:
+kv (array_like) – The velocity gains to set.
+
+dofs_idx_local (None | array_like, optional) – The indices of the dofs to set. If None, all dofs will be set. Note that here this uses the local q_idx, not the scene-level one. Defaults to None.
+
+
+set_dofs_kp(kp, dofs_idx_local=None)[source]
+Set the entity’s dofs’ positional gains for the PD controller.
+
+Parameters
+:
+kp (array_like) – The positional gains to set.
+
+dofs_idx_local (None | array_like, optional) – The indices of the dofs to set. If None, all dofs will be set. Note that here this uses the local q_idx, not the scene-level one. Defaults to None.
+
+
+set_dofs_force_range(lower, upper, dofs_idx_local=None)[source]
+Set the entity’s dofs’ force range.
+
+Parameters
+:
+lower (array_like) – The lower bounds of the force range.
+
+upper (array_like) – The upper bounds of the force range.
+
+dofs_idx_local (None | array_like, optional) – The indices of the dofs to set. If None, all dofs will be set. Note that here this uses the local q_idx, not the scene-level one. Defaults to None.
+
+
+control_dofs_position(position, dofs_idx_local=None, envs_idx=None)[source]
+Set the PD controller’s target position for the entity’s dofs. This is used for position control.
+
+Parameters
+:
+position (array_like) – The target position to set.
+
+dofs_idx_local (None | array_like, optional) – The indices of the dofs to control. If None, all dofs will be controlled. Note that here this uses the local q_idx, not the scene-level one. Defaults to None.
+
+envs_idx (None | array_like, optional) – The indices of the environments. If None, all environments will be considered. Defaults to None.
+
+
+get_joint(name=None, id=None)[source]
+Get a RigidJoint object by name or id.
+
+Parameters
+:
+name (str, optional) – The name of the joint. Defaults to None.
+
+id (str, optional) – The id of the joint. This can be a substring of the joint’s id. Defaults to None.
+
+Returns
+:
+joint – The joint object.
+
+Return type
+:
+RigidJoint
+
+
+gs.RigidJoint
+class genesis.engine.entities.rigid_entity.rigid_joint.RigidJoint(entity, name, idx, q_start, dof_start, n_qs, n_dofs, type, pos, quat, dofs_motion_ang, dofs_motion_vel, dofs_limit, dofs_invweight, dofs_stiffness, dofs_sol_params, dofs_damping, dofs_armature, dofs_kp, dofs_kv, dofs_force_range, init_qpos)[source]
+Bases: RBC
+
+Joint class for rigid body entities. Each RigidLink is connected to its parent link via a RigidJoint.
+
+get_pos()[source]
+Get the position of the joint in the world frame.
+
+get_quat()[source]
+Get the quaternion of the joint in the world frame.
+
+property uid
+Returns the unique id of the joint.
+
+property name
+Returns the name of the joint.
+
+property entity
+Returns the entity that the joint belongs to.
+
+property solver
+The RigidSolver object that the joint belongs to.
+
+property link
+Returns the child link that of the joint.
+
+property idx
+Returns the global index of the joint in the rigid solver.
+
+property idx_local
+Returns the local index of the joint in the entity.
+
+property init_qpos
+Returns the initial joint position.
+
+property n_qs
+Returns the number of q (generalized coordinate) variables that the joint has.
+
+property n_dofs
+Returns the number of dofs that the joint has.
+
+property type
+Returns the type of the joint.
+
+property pos
+Returns the initial position of the joint in the world frame.
+
+property quat
+Returns the initial quaternion of the joint in the world frame.
+
+property q_start
+Returns the starting index of the q variables of the joint in the rigid solver.
+
+property dof_start
+Returns the starting index of the dofs of the joint in the rigid solver.
+
+property q_end
+Returns the ending index of the q variables of the joint in the rigid solver.
+
+property dof_end
+Returns the ending index of the dofs of the joint in the rigid solver.
+
+property dof_idx
+Returns all the dof indices of the joint in the rigid solver.
+
+property dof_idx_local
+Returns the local dof index of the joint in the entity.
+
+property q_idx
+Returns all the q indices of the joint in the rigid solver.
+
+property q_idx_local
+Returns all the local q indices of the joint in the entity.
+
+property dofs_motion_ang
+property dofs_motion_vel
+property dofs_limit
+Returns the range limit of the dofs of the joint.
+
+property dofs_invweight
+Returns the invweight of the dofs of the joint.
+
+property dofs_stiffness
+Returns the stiffness of the dofs of the joint.
+
+property dofs_sol_params
+Retruns the solver parameters of the dofs of the joint.
+
+property dofs_damping
+Returns the damping of the dofs of the joint.
+
+property dofs_armature
+Returns the armature of the dofs of the joint.
+
+property dofs_kp
+Returns the kp (positional gain) of the dofs of the joint.
+
+property dofs_kv
+Returns the kv (velocity gain) of the dofs of the joint.
+
+property dofs_force_range
+Returns the force range of the dofs of the joint.
+
+property is_built
+Returns whether the entity the joint belongs to is built.
