@@ -1,1 +1,7 @@
 src/__pycache__
+unitree_ws/build
+unitree_ws/install
+unitree_ws/log
+quadruped_controller/build
+quadruped_controller/install
+quadruped_controller/log
