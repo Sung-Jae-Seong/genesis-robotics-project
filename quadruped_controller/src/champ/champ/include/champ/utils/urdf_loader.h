@@ -60,106 +60,76 @@ namespace champ
             }
         }
 
-        void fillLeg(champ::QuadrupedLeg *leg, const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr nh, urdf::Model &model, std::string links_map)
+        void fillLeg(champ::QuadrupedLeg *leg, urdf::Model &model, const std::vector<std::string>& links_param)
         {
-            rclcpp::Parameter links_param_("links_param", std::vector<std::string> ({}));
-            auto success = nh->get_parameter(links_map, links_param_);
-            if (!success){
-                throw std::runtime_error("No links config file provided");
-            }
-
-            std::vector<std::string> links_param = links_param_.as_string_array();
-
-            for (int i = 3; i > -1; i--){
+            // 링크 설정
+            for (int i = 3; i > -1; i--) {
                 std::string ref_link, end_link;
-                if (i>0){
-                    ref_link = links_param[i-1];
-                }else {
+
+                if (i > 0) {
+                    ref_link = links_param[i - 1];
+                } else {
                     ref_link = model.getRoot()->name;
                 }
 
                 end_link = links_param[i];
+
                 urdf::Pose pose;
                 getPose(&pose, ref_link, end_link, model);
-                double x,y,z;
-                x = pose.position.x;
-                y = pose.position.y;
-                z = pose.position.z;
-                
-                leg->joint_chain[i]->setTranslation(x,y,z);
-            }
 
-        }
-
-        void loadFromFile(champ::QuadrupedBase &base, const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr nh, const std::string& urdf_filepath)
-        {
-            urdf::Model model;
-            // TODO fix temp path
-            if (!model.initFile(urdf_filepath)){
-                 RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to parse urdf file");
-            } 
-            
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Successfully parsed urdf file");
-            std::vector<std::string> links_map;
-
-            links_map.push_back("links_map.left_front");
-            links_map.push_back("links_map.right_front");
-            links_map.push_back("links_map.left_hind");
-            links_map.push_back("links_map.right_hind");
-            
-            for(int i = 0; i < 4; i++)
-            {
-                fillLeg(base.legs[i], nh, model, links_map[i]);
+                double x = pose.position.x;
+                double y = pose.position.y;
+                double z = pose.position.z;
+                leg->joint_chain[i]->setTranslation(x, y, z);
             }
         }
 
-        void loadFromString(champ::QuadrupedBase &base, const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr nh, const std::string& urdf_string)
+        // void loadFromFile(champ::QuadrupedBase &base, const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr nh, const std::string& urdf_filepath)
+        // {
+        //     urdf::Model model;
+        //     // TODO fix temp path
+        //     if (!model.initFile(urdf_filepath)){
+        //          RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to parse urdf file");
+        //     } 
+            
+        //     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Successfully parsed urdf file");
+        //     std::vector<std::string> links_map;
+
+        //     links_map.push_back("links_map.left_front");
+        //     links_map.push_back("links_map.right_front");
+        //     links_map.push_back("links_map.left_hind");
+        //     links_map.push_back("links_map.right_hind");
+            
+        //     for(int i = 0; i < 4; i++)
+        //     {
+        //         fillLeg(base.legs[i], nh, model, links_map[i]);
+        //     }
+        // }
+
+        void loadFromString(champ::QuadrupedBase &base, std::vector<std::vector<std::string>> links_map, const std::string& urdf_string)
         {
             urdf::Model model;
-            // TODO fix temp path
             if (!model.initString(urdf_string)){
                  RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to parse urdf string");
-            } 
+            }
             
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Successfully parsed urdf file");
-            std::vector<std::string> links_map;
-
-            links_map.push_back("links_map.left_front");
-            links_map.push_back("links_map.right_front");
-            links_map.push_back("links_map.left_hind");
-            links_map.push_back("links_map.right_hind");
-            
-            for(int i = 0; i < 4; i++)
-            {
-                fillLeg(base.legs[i], nh, model, links_map[i]);
+            for (int i = 0; i < 4; i++) {
+                fillLeg(base.legs[i], model, links_map[i]);
             }
         }
 
-        std::vector<std::string> getJointNames(const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr nh)
+        std::vector<std::string> getJointNames(const std::map<std::string, std::vector<std::string>> joints_map)
         {
-            std::vector<std::string> joints_map;
             std::vector<std::string> joint_names;
-
-            joints_map.push_back("joints_map.left_front");
-            joints_map.push_back("joints_map.right_front");
-            joints_map.push_back("joints_map.left_hind");
-            joints_map.push_back("joints_map.right_hind");
-
-           
-            for(int i = 0; i < 4; i++)
+            
+            for (const auto& [group, joints] : joints_map)
             {
-                rclcpp::Parameter joints_param_("joints_param", std::vector<std::string> ({}));
-                auto success = nh->get_parameter(joints_map[i], joints_param_);
-                if (!success){
-                    throw std::runtime_error("No joints config file provided");
+                for (const auto& joint : joints)
+                {
+                    joint_names.push_back(joint);
                 }
-
-
-                std::vector<std::string> joints_param = joints_param_.as_string_array();
-                for (int j=0;j<3;j++){
-                    joint_names.push_back(joints_param[j]);
-                }
-            }
+            }   
 
             return joint_names;
         }
