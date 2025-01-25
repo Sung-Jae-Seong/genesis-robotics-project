@@ -5,3 +5,6 @@ unitree_ws/log
 quadruped_controller/build
 quadruped_controller/install
 quadruped_controller/log
+quadruped_controller_cpp/build
+quadruped_controller_cpp/install
+quadruped_controller_cpp/log
