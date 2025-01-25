@@ -28,41 +28,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef QUADRUPED_CONTROLLER_H
 #define QUADRUPED_CONTROLLER_H
 
-#include "rclcpp/rclcpp.hpp"
+#include <string>
+#include <vector>
 
-#include <champ_msgs/msg/joints.hpp>
-#include <champ_msgs/msg/pose.hpp>
-#include <champ_msgs/msg/point_array.hpp>
-#include <champ_msgs/msg/contacts_stamped.hpp>
+#include "rclcpp/rclcpp.hpp"
 
 #include <champ/body_controller/body_controller.h>
 #include <champ/utils/urdf_loader.h>
 #include <champ/leg_controller/leg_controller.h>
 #include <champ/kinematics/kinematics.h>
 
-#include <geometry_msgs/msg/twist.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-#include "tf2/transform_datatypes.h"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2/LinearMath/Matrix3x3.h"
-
-#include <sensor_msgs/msg/joint_state.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include <trajectory_msgs/msg/joint_trajectory_point.hpp>
 
-class QuadrupedController: public rclcpp::Node
-{
-    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscription_;
-    rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr cmd_pose_subscription_;
-    
-
+class QuadrupedController: 
+  public rclcpp::Node {
     rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_commands_publisher_;
-    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
-    rclcpp::Publisher<champ_msgs::msg::ContactsStamped>::SharedPtr foot_contacts_publisher_;
 
     rclcpp::TimerBase::SharedPtr loop_timer_;
     rclcpp::Clock clock_;
-    
+
     champ::Velocities req_vel_;
     champ::Pose req_pose_;
 
@@ -78,21 +63,14 @@ class QuadrupedController: public rclcpp::Node
 
     std::vector<std::string> joint_names_;
 
-    bool publish_foot_contacts_;
     bool publish_joint_states_;
     bool publish_joint_control_;
-    bool in_gazebo_;
 
     void controlLoop_();
-    
     void publishJoints_(float target_joints[12]);
-    void publishFootContacts_(bool foot_contacts[4]);
 
-    void cmdVelCallback_(const geometry_msgs::msg::Twist::SharedPtr msg);
-    void cmdPoseCallback_(const geometry_msgs::msg::Pose::SharedPtr msg);
-
-    public:
-        QuadrupedController();
+  public:
+    QuadrupedController();
 };
 
-#endif
+#endif  // QUADRUPED_CONTROLLER_H

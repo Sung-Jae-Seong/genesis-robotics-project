@@ -27,9 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <quadruped_controller.h>
-#include <string>
 #include <map>
-#include <vector>
 #include <iostream>
 
 champ::PhaseGenerator::Time rosTimeToChampTime(const rclcpp::Time& time) {
@@ -748,7 +746,6 @@ QuadrupedController::QuadrupedController():
 void QuadrupedController::controlLoop_() {
     float target_joint_positions[12];
     geometry::Transformation target_foot_positions[4];
-    bool foot_contacts[4];
 
     body_controller_.poseCommand(target_foot_positions, req_pose_);
 
