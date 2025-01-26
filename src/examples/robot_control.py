@@ -7,7 +7,7 @@ os.environ['PYOPENGL_PLATFORM'] = 'glx'
 
 ######## Init Genesis / Generate scene
 import genesis as gs
-gs.init(backend=gs.cpu)
+gs.init()
 
 scene = gs.Scene(
     show_viewer=True,
@@ -20,7 +20,7 @@ plane = scene.add_entity(gs.morphs.Plane())
 #panda = scene.add_entity(gs.morphs.MJCF(file='xml/franka_emika_panda/panda.xml'))
 m0609 = scene.add_entity(
     gs.morphs.URDF(
-        file='/home/sjs/genesis/resource/m0609_gripper.urdf',
+        file='/home/sjs/genesis-robotics-project/resource/m0609_gripper.urdf',
         fixed=True,
     ),
 )

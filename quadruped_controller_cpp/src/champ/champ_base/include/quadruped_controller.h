@@ -30,23 +30,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
+#include <iostream>
+#include <chrono>
+#include <thread>
 
 #include <champ/body_controller/body_controller.h>
 #include <champ/utils/urdf_loader.h>
 #include <champ/leg_controller/leg_controller.h>
 #include <champ/kinematics/kinematics.h>
 
-#include <trajectory_msgs/msg/joint_trajectory.hpp>
-#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
-
-class QuadrupedController: 
-  public rclcpp::Node {
-    rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_commands_publisher_;
-
-    rclcpp::TimerBase::SharedPtr loop_timer_;
-    rclcpp::Clock clock_;
+class QuadrupedController{
+  public:
 
     champ::Velocities req_vel_;
     champ::Pose req_pose_;
@@ -62,14 +56,8 @@ class QuadrupedController:
     float turn;
 
     std::vector<std::string> joint_names_;
-
-    bool publish_joint_states_;
-    bool publish_joint_control_;
-
     void controlLoop_();
-    void publishJoints_(float target_joints[12]);
 
-  public:
     QuadrupedController();
 };
 

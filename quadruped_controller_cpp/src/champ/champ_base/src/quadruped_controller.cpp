@@ -30,17 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 #include <iostream>
 
-champ::PhaseGenerator::Time rosTimeToChampTime(const rclcpp::Time& time) {
-  return time.nanoseconds() / 1000ul;
+champ::PhaseGenerator::Time stdTimeToChampTime(const std::chrono::steady_clock::time_point& time) {
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(time.time_since_epoch());
+    return duration.count(); // 마이크로초 단위 반환
 }
 
 QuadrupedController::QuadrupedController():
-    Node("quadruped_controller_node", rclcpp::NodeOptions()
-                        .allow_undeclared_parameters(true)
-                        .automatically_declare_parameters_from_overrides(true)),
-    clock_(*this->get_clock()),
     body_controller_(base_),
-    leg_controller_(base_, rosTimeToChampTime(clock_.now())),
+    leg_controller_(base_, stdTimeToChampTime(std::chrono::steady_clock::now())),
     kinematics_(base_)
 {
     speed = 0.5;
@@ -706,14 +703,6 @@ QuadrupedController::QuadrupedController():
     gait_config_.nominal_height = 0.225;
     knee_orientation = ">>";
 
-    publish_joint_states_ = true;
-    publish_joint_control_ = true;
-    std::string joint_control_topic = "joint_group_effort_controller/joint_trajectory";
-
-    if (publish_joint_control_) {
-        joint_commands_publisher_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(joint_control_topic, 10);
-    }
-
     gait_config_.knee_orientation = knee_orientation.c_str();
 
     base_.setGaitConfig(gait_config_);
@@ -734,12 +723,6 @@ QuadrupedController::QuadrupedController():
     };
     joint_names_ = champ::URDF::getJointNames(joints_map);
 
-    std::chrono::milliseconds period(static_cast<int>(1000/loop_rate));
-
-    loop_timer_ = this->create_wall_timer(
-        std::chrono::duration_cast<std::chrono::milliseconds>(period),
-        std::bind(&QuadrupedController::controlLoop_, this)
-    );
     req_pose_.position.z = gait_config_.nominal_height;
 }
 
@@ -749,30 +732,60 @@ void QuadrupedController::controlLoop_() {
 
     body_controller_.poseCommand(target_foot_positions, req_pose_);
 
-    leg_controller_.velocityCommand(target_foot_positions, req_vel_, rosTimeToChampTime(clock_.now()));
+    auto current_time = std::chrono::steady_clock::now();
+    leg_controller_.velocityCommand(target_foot_positions, req_vel_, stdTimeToChampTime(current_time));
     kinematics_.inverse(target_joint_positions, target_foot_positions);
 
     req_vel_.linear.x = 1*speed;
     req_vel_.linear.y = 0*speed;
     req_vel_.angular.z = 0*turn;
 
-    publishJoints_(target_joint_positions);
+    std::cout << joint_names_[0] << std::endl;
+    std::cout << joint_names_[1] << std::endl;
+    std::cout << joint_names_[2] << std::endl;
+    std::cout << joint_names_[3] << std::endl;
+    std::cout << joint_names_[4] << std::endl;
+    std::cout << joint_names_[5] << std::endl;
+    std::cout << joint_names_[6] << std::endl;
+    std::cout << joint_names_[7] << std::endl;
+    std::cout << joint_names_[9] << std::endl;
+    std::cout << joint_names_[9] << std::endl;
+    std::cout << joint_names_[10] << std::endl;
+    std::cout << joint_names_[11] << std::endl;
+
+    std::cout << target_joint_positions[0] << std::endl;
+    std::cout << target_joint_positions[1] << std::endl;
+    std::cout << target_joint_positions[2] << std::endl;
+    std::cout << target_joint_positions[3] << std::endl;
+    std::cout << target_joint_positions[4] << std::endl;
+    std::cout << target_joint_positions[5] << std::endl;
+    std::cout << target_joint_positions[6] << std::endl;
+    std::cout << target_joint_positions[7] << std::endl;
+    std::cout << target_joint_positions[9] << std::endl;
+    std::cout << target_joint_positions[9] << std::endl;
+    std::cout << target_joint_positions[10] << std::endl;
+    std::cout << target_joint_positions[11] << std::endl;
 }
 
-void QuadrupedController::publishJoints_(float target_joints[12]) {
-    if (publish_joint_control_) {
-        trajectory_msgs::msg::JointTrajectory joints_cmd_msg;
-        joints_cmd_msg.header.stamp = clock_.now();
+int main() {
+    auto quadruped_controller = std::make_shared<QuadrupedController>();
 
-        joints_cmd_msg.joint_names = joint_names_;
+    // 타이머 루프 실행
+    double loop_rate_hz = 200.0; // 200Hz 루프
+    auto period = std::chrono::milliseconds(static_cast<int>(1000 / loop_rate_hz));
 
-        trajectory_msgs::msg::JointTrajectoryPoint point;
+    auto start_time = std::chrono::steady_clock::now();
+    while (true) {
+        std::this_thread::sleep_for(period); // 주기적 실행
+        quadruped_controller->controlLoop_();
 
-        point.time_from_start = rclcpp::Duration::from_seconds(1.0 / 60.0);
-        point.positions.resize(12);
-        point.positions.assign(target_joints, target_joints + 12);
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(now - start_time);
 
-        joints_cmd_msg.points.push_back(point);
-        joint_commands_publisher_->publish(joints_cmd_msg);
+        if (elapsed_time.count() >= 5) {
+            break; // 5초가 지나면 루프 종료
+        }
     }
+
+    return 0;
 }

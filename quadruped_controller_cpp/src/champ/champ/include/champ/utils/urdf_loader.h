@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef URDF_LOADER_H
 #define URDF_LOADER_H
 
-#include <rclcpp/rclcpp.hpp>
 #include <urdf/model.h>
 // #include <utils/xmlrpc_helpers.h>
 
@@ -84,38 +83,17 @@ namespace champ
             }
         }
 
-        // void loadFromFile(champ::QuadrupedBase &base, const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr nh, const std::string& urdf_filepath)
-        // {
-        //     urdf::Model model;
-        //     // TODO fix temp path
-        //     if (!model.initFile(urdf_filepath)){
-        //          RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to parse urdf file");
-        //     } 
-            
-        //     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Successfully parsed urdf file");
-        //     std::vector<std::string> links_map;
-
-        //     links_map.push_back("links_map.left_front");
-        //     links_map.push_back("links_map.right_front");
-        //     links_map.push_back("links_map.left_hind");
-        //     links_map.push_back("links_map.right_hind");
-            
-        //     for(int i = 0; i < 4; i++)
-        //     {
-        //         fillLeg(base.legs[i], nh, model, links_map[i]);
-        //     }
-        // }
-
         void loadFromString(champ::QuadrupedBase &base, std::vector<std::vector<std::string>> links_map, const std::string& urdf_string)
         {
             urdf::Model model;
             if (!model.initString(urdf_string)){
-                 RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to parse urdf string");
+                std::cout << "Failed to parse urdf string" << std::endl;
             }
-            
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Successfully parsed urdf file");
-            for (int i = 0; i < 4; i++) {
-                fillLeg(base.legs[i], model, links_map[i]);
+            else{
+                std::cout << "Successfully parsed urdf file" << std::endl;
+                for (int i = 0; i < 4; i++) {
+                    fillLeg(base.legs[i], model, links_map[i]);
+                }
             }
         }
 
@@ -132,34 +110,6 @@ namespace champ
             }   
 
             return joint_names;
-        }
-
-        std::vector<std::string> getLinkNames(const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr nh)
-        {
-            std::vector<std::string> links_map;
-            std::vector<std::string> links_names;
-
-            links_map.push_back("links_map.left_front");
-            links_map.push_back("links_map.right_front");
-            links_map.push_back("links_map.left_hind");
-            links_map.push_back("links_map.right_hind");
-
-            for(int i = 0; i < 4; i++)
-            {
-                rclcpp::Parameter links_param_("links_param", std::vector<std::string> ({}));
-                auto success = nh->get_parameter(links_map[i], links_param_);
-                if (!success){
-                    throw std::runtime_error("No links config file provided");
-                }
-
-
-                std::vector<std::string> link_param = links_param_.as_string_array();
-                for (int j=0;j<4;j++){
-                    links_names.push_back(link_param[j]);
-                }
-            }
-
-            return links_names;
         }
     }
 }

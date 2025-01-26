@@ -2,5 +2,4 @@ TODO
 
 quadruped_controller를 ros를 거치지 않고 사용가능하게 만들기
 
-2. 필요없는 소스코드 삭제
 3. C++ 패키지로 만들고 pybind과 .so로 배포

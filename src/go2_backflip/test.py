@@ -21,7 +21,7 @@ class Ros2ToGenesisController(Node):
         )
 
         # Genesis 초기화 및 Scene 설정
-        gs.init(backend=gs.cpu)
+        gs.init()
         self.scene = gs.Scene(
             show_viewer=True,
             sim_options=gs.options.SimOptions(
