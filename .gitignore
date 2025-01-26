@@ -8,5 +8,6 @@ quadruped_controller/log
 quadruped_controller_cpp/build
 quadruped_controller_cpp/install
 quadruped_controller_cpp/log
-.vscode/settings.json
+quadruped_controller_cpp/src/champ/champ/build
+quadruped_controller_cpp/src/champ/champ_base/build
 .vscode/
