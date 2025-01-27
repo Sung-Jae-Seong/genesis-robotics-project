@@ -1,5 +1,7 @@
 TODO
 
-quadruped_controller를 ros를 거치지 않고 사용가능하게 만들기
+오류 : cpp에서 realtime부터 챙기기
+pybind에서 사용가능하게 함수 wrapping하기
+분리성 챙기기(private, public)
 
 3. C++ 패키지로 만들고 pybind과 .so로 배포

@@ -14,8 +14,10 @@ find_package(pybind11 REQUIRED)
 include_directories(
   include
   ${urdf_INCLUDE_DIRS}
+  ${Python3_INCLUDE_DIRS}
   /usr/local/include/champ #champ path
 )
+link_libraries(${Python3_LIBRARIES})
 
 add_executable(quadruped_controller src/quadruped_controller.cpp)
 ament_target_dependencies(quadruped_controller urdf champ)
@@ -29,5 +31,5 @@ install(TARGETS
   RUNTIME DESTINATION bin
 )
 
-pybind11_add_module(quadruped_controller_binding src/quadruped_controller_binding.cpp)
+pybind11_add_module(quadruped_controller_binding src/quadruped_controller)
 target_link_libraries(quadruped_controller_binding PRIVATE ${urdf_LIBRARIES} champ_lib)

@@ -92,6 +92,7 @@ quadruped_controller_EXTERNAL_OBJECTS =
 
 quadruped_controller: CMakeFiles/quadruped_controller.dir/src/quadruped_controller.cpp.o
 quadruped_controller: CMakeFiles/quadruped_controller.dir/build.make
+quadruped_controller: /usr/lib/x86_64-linux-gnu/libpython3.10.so
 quadruped_controller: /opt/ros/humble/lib/liburdf.so
 quadruped_controller: /opt/ros/humble/lib/liburdf.so
 quadruped_controller: /opt/ros/humble/lib/libclass_loader.so
@@ -112,13 +113,13 @@ quadruped_controller: /opt/ros/humble/lib/x86_64-linux-gnu/liburdfdom_sensor.so.
 quadruped_controller: /opt/ros/humble/lib/x86_64-linux-gnu/liburdfdom_model.so.3.0
 quadruped_controller: /opt/ros/humble/lib/x86_64-linux-gnu/liburdfdom_model_state.so.3.0
 quadruped_controller: /opt/ros/humble/lib/x86_64-linux-gnu/liburdfdom_world.so.3.0
+quadruped_controller: /usr/lib/x86_64-linux-gnu/libtinyxml.so
 quadruped_controller: /opt/ros/humble/lib/libament_index_cpp.so
 quadruped_controller: /opt/ros/humble/lib/libclass_loader.so
 quadruped_controller: /usr/lib/x86_64-linux-gnu/libconsole_bridge.so.1.0
 quadruped_controller: /opt/ros/humble/lib/librcpputils.so
 quadruped_controller: /opt/ros/humble/lib/librcutils.so
 quadruped_controller: /usr/lib/x86_64-linux-gnu/libtinyxml2.so
-quadruped_controller: /usr/lib/x86_64-linux-gnu/libtinyxml.so
 quadruped_controller: CMakeFiles/quadruped_controller.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/sjs/genesis-robotics-project/quadruped_controller_cpp/src/champ/champ_base/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable quadruped_controller"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/quadruped_controller.dir/link.txt --verbose=$(VERBOSE)

@@ -43,652 +43,7 @@ QuadrupedController::QuadrupedController():
     speed = 0.5;
     turn = 1.0;
     std::string knee_orientation;
-    std::string urdf = R"(<?xml version="1.0" ?>
-<robot name="go2">
-  <material name="black">
-    <color rgba="0.0 0.0 0.0 1.0"/>
-  </material>
-  <material name="blue">
-    <color rgba="0.0 0.0 0.8 1.0"/>
-  </material>
-  <material name="green">
-    <color rgba="0.0 0.8 0.0 1.0"/>
-  </material>
-  <material name="grey">
-    <color rgba="0.2 0.2 0.2 0.0"/>
-  </material>
-  <material name="silver">
-    <color rgba="0.9137254901960784 0.9137254901960784 0.8470588235294118 1.0"/>
-  </material>
-  <material name="orange">
-    <color rgba="1.0 0.4235294117647059 0.0392156862745098 1.0"/>
-  </material>
-  <material name="brown">
-    <color rgba="0.8705882352941177 0.8117647058823529 0.7647058823529411 1.0"/>
-  </material>
-  <material name="red">
-    <color rgba="0.8 0.0 0.0 1.0"/>
-  </material>
-  <material name="white">
-    <color rgba="1.0 1.0 1.0 1.0"/>
-  </material>
-  <!-- <xacro:include filename="$(find go2_description)/xacro/transmission.xacro"/> -->
-  <!-- <xacro:include filename="$(find go2_description)/xacro/stairs.xacro"/> -->
-  <!-- <xacro:include filename="$(find go2_description)/xacro/gazebo.xacro"/> -->
-  <!-- <xacro:include filename="$(find go2_gazebo)/launch/stairs.urdf.xacro"/> -->
-  <!-- <xacro:stairs stairs="15" xpos="0" ypos="0" zpos="0" /> -->
-  <!-- Rotor related joint and link is only for demonstrate location. -->
-  <!-- Actually, the rotor will rotate and the joint is not fixed. Reduction ratio should be considered. -->
-  <link name="base_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <box size="0.001 0.001 0.001"/>
-      </geometry>
-    </visual>
-  </link>
-  <joint name="floating_base" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 0"/>
-    <parent link="base_link"/>
-    <child link="trunk"/>
-  </joint>
-  <link name="trunk">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/trunk.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <box size="0.3762 0.0935 0.114"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="0.021112 0.0 -0.005366"/>
-      <mass value="6.921"/>
-      <inertia ixx="0.02448" ixy="0.00012166" ixz="0.0014849" iyy="0.098077" iyz="-3.12e-05" izz="0.107"/>
-    </inertial>
-  </link>
-  <joint name="imu_joint" type="fixed">
-    <parent link="trunk"/>
-    <child link="imu_link"/>
-    <origin rpy="0 0 0" xyz="0 0 0"/>
-  </joint>
-  <link name="imu_link">
-    <inertial>
-      <mass value="0.001"/>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
-    </inertial>
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <box size="0.001 0.001 0.001"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <box size=".001 .001 .001"/>
-      </geometry>
-    </collision>
-  </link>
-  <!--
-    <joint name="load_joint" type="fixed">
-        <parent link="trunk"/>
-        <child link="load_link"/>
-        <origin rpy="0 0 0" xyz="0 0 0"/>
-    </joint>
-
-    <link name="load_link">
-        <inertial>
-            <mass value="5"/>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-            <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
-        </inertial>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0.2"/>
-            <geometry>
-                <box size="0.5 0.3 0.2"/>
-            </geometry>
-        </visual>
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-            <geometry>
-                <box size=".001 .001 .001"/>
-            </geometry>
-        </collision>
-    </link>
-  -->
-  <joint name="rf_hip_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0.1934 -0.0465 0"/>
-    <parent link="trunk"/>
-    <child link="rf_hip_link"/>
-    <axis xyz="1 0 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="23.7" lower="-1.0472" upper="1.0472" velocity="30.1"/>
-  </joint>
-  <link name="rf_hip_link">
-    <visual>
-      <origin rpy="3.141592653589793 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/hip.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 -0.0955 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.046"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="-0.0054 -0.00194 -0.000105"/>
-      <mass value="0.678"/>
-      <inertia ixx="0.00048" ixy="3.01e-06" ixz="1.11e-06" iyy="0.000884" iyz="1.42e-06" izz="0.000596"/>
-    </inertial>
-  </link>
-  <joint name="rf_upper_leg_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0 -0.0955 0"/>
-    <parent link="rf_hip_link"/>
-    <child link="rf_upper_leg_link"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="23.7" lower="-1.5708" upper="3.4907" velocity="30.1"/>
-  </joint>
-  <link name="rf_upper_leg_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/thigh_mirror.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1065"/>
-      <geometry>
-        <box size="0.213 0.0245 0.034"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="-0.00374 0.0223 -0.0327"/>
-      <mass value="1.152"/>
-      <inertia ixx="0.00584" ixy="-8.72e-05" ixz="-0.000289" iyy="0.0058" iyz="-0.000808" izz="0.00103"/>
-    </inertial>
-  </link>
-  <joint name="rf_lower_leg_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0 0 -0.213"/>
-    <parent link="rf_upper_leg_link"/>
-    <child link="rf_lower_leg_link"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="35.55" lower="-2.7227" upper="-0.83776" velocity="20.06"/>
-  </joint>
-  <link name="rf_lower_leg_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/calf.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1065"/>
-      <geometry>
-        <box size="0.213 0.016 0.016"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="0.00548 -0.000975 -0.115"/>
-      <mass value="0.154"/>
-      <inertia ixx="0.00108" ixy="3.4e-07" ixz="1.72e-05" iyy="0.0011" iyz="8.28e-06" izz="3.29e-05"/>
-    </inertial>
-  </link>
-  <joint name="rf_foot_joint" type="fixed">
-    0
-            
-    <origin rpy="0 0 0" xyz="0 0 -0.213"/>
-    <parent link="rf_lower_leg_link"/>
-    <child link="rf_foot_link"/>
-  </joint>
-  <link name="rf_foot_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <sphere radius="0.01"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <sphere radius="0.02"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="0.06"/>
-      <inertia ixx="9.600000000000001e-06" ixy="0.0" ixz="0.0" iyy="9.600000000000001e-06" iyz="0.0" izz="9.600000000000001e-06"/>
-    </inertial>
-  </link>
-  <ros2_control name="rf" type="system">
-    <hardware>
-      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
-    </hardware>
-    <joint name="rf_hip_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="rf_upper_leg_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="rf_lower_leg_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-  </ros2_control>
-  <!-- <xacro:leg_transmission name="${name}"/> -->
-  <joint name="lf_hip_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0.1934 0.0465 0"/>
-    <parent link="trunk"/>
-    <child link="lf_hip_link"/>
-    <axis xyz="1 0 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="23.7" lower="-1.0472" upper="1.0472" velocity="30.1"/>
-  </joint>
-  <link name="lf_hip_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/hip.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0.0955 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.046"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="-0.0054 0.00194 -0.000105"/>
-      <mass value="0.678"/>
-      <inertia ixx="0.00048" ixy="-3.01e-06" ixz="1.11e-06" iyy="0.000884" iyz="-1.42e-06" izz="0.000596"/>
-    </inertial>
-  </link>
-  <joint name="lf_upper_leg_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0 0.0955 0"/>
-    <parent link="lf_hip_link"/>
-    <child link="lf_upper_leg_link"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="23.7" lower="-1.5708" upper="3.4907" velocity="30.1"/>
-  </joint>
-  <link name="lf_upper_leg_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/thigh.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1065"/>
-      <geometry>
-        <box size="0.213 0.0245 0.034"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="-0.00374 -0.0223 -0.0327"/>
-      <mass value="1.152"/>
-      <inertia ixx="0.00584" ixy="8.72e-05" ixz="-0.000289" iyy="0.0058" iyz="0.000808" izz="0.00103"/>
-    </inertial>
-  </link>
-  <joint name="lf_lower_leg_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0 0 -0.213"/>
-    <parent link="lf_upper_leg_link"/>
-    <child link="lf_lower_leg_link"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="35.55" lower="-2.7227" upper="-0.83776" velocity="20.06"/>
-  </joint>
-  <link name="lf_lower_leg_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/calf.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1065"/>
-      <geometry>
-        <box size="0.213 0.016 0.016"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="0.00548 -0.000975 -0.115"/>
-      <mass value="0.154"/>
-      <inertia ixx="0.00108" ixy="3.4e-07" ixz="1.72e-05" iyy="0.0011" iyz="8.28e-06" izz="3.29e-05"/>
-    </inertial>
-  </link>
-  <joint name="lf_foot_joint" type="fixed">
-    0
-            
-    <origin rpy="0 0 0" xyz="0 0 -0.213"/>
-    <parent link="lf_lower_leg_link"/>
-    <child link="lf_foot_link"/>
-  </joint>
-  <link name="lf_foot_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <sphere radius="0.01"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <sphere radius="0.02"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="0.06"/>
-      <inertia ixx="9.600000000000001e-06" ixy="0.0" ixz="0.0" iyy="9.600000000000001e-06" iyz="0.0" izz="9.600000000000001e-06"/>
-    </inertial>
-  </link>
-  <ros2_control name="lf" type="system">
-    <hardware>
-      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
-    </hardware>
-    <joint name="lf_hip_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="lf_upper_leg_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="lf_lower_leg_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-  </ros2_control>
-  <!-- <xacro:leg_transmission name="${name}"/> -->
-  <joint name="rh_hip_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="-0.1934 -0.0465 0"/>
-    <parent link="trunk"/>
-    <child link="rh_hip_link"/>
-    <axis xyz="1 0 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="23.7" lower="-1.0472" upper="1.0472" velocity="30.1"/>
-  </joint>
-  <link name="rh_hip_link">
-    <visual>
-      <origin rpy="3.141592653589793 3.141592653589793 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/hip.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 -0.0955 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.046"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="0.0054 -0.00194 -0.000105"/>
-      <mass value="0.678"/>
-      <inertia ixx="0.00048" ixy="-3.01e-06" ixz="-1.11e-06" iyy="0.000884" iyz="1.42e-06" izz="0.000596"/>
-    </inertial>
-  </link>
-  <joint name="rh_upper_leg_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0 -0.0955 0"/>
-    <parent link="rh_hip_link"/>
-    <child link="rh_upper_leg_link"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="23.7" lower="-1.5708" upper="3.4907" velocity="30.1"/>
-  </joint>
-  <link name="rh_upper_leg_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/thigh_mirror.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1065"/>
-      <geometry>
-        <box size="0.213 0.0245 0.034"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="-0.00374 0.0223 -0.0327"/>
-      <mass value="1.152"/>
-      <inertia ixx="0.00584" ixy="-8.72e-05" ixz="-0.000289" iyy="0.0058" iyz="-0.000808" izz="0.00103"/>
-    </inertial>
-  </link>
-  <joint name="rh_lower_leg_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0 0 -0.213"/>
-    <parent link="rh_upper_leg_link"/>
-    <child link="rh_lower_leg_link"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="35.55" lower="-2.7227" upper="-0.83776" velocity="20.06"/>
-  </joint>
-  <link name="rh_lower_leg_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/calf.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1065"/>
-      <geometry>
-        <box size="0.213 0.016 0.016"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="0.00548 -0.000975 -0.115"/>
-      <mass value="0.154"/>
-      <inertia ixx="0.00108" ixy="3.4e-07" ixz="1.72e-05" iyy="0.0011" iyz="8.28e-06" izz="3.29e-05"/>
-    </inertial>
-  </link>
-  <joint name="rh_foot_joint" type="fixed">
-    0
-            
-    <origin rpy="0 0 0" xyz="0 0 -0.213"/>
-    <parent link="rh_lower_leg_link"/>
-    <child link="rh_foot_link"/>
-  </joint>
-  <link name="rh_foot_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <sphere radius="0.01"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <sphere radius="0.02"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="0.06"/>
-      <inertia ixx="9.600000000000001e-06" ixy="0.0" ixz="0.0" iyy="9.600000000000001e-06" iyz="0.0" izz="9.600000000000001e-06"/>
-    </inertial>
-  </link>
-  <ros2_control name="rh" type="system">
-    <hardware>
-      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
-    </hardware>
-    <joint name="rh_hip_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="rh_upper_leg_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="rh_lower_leg_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-  </ros2_control>
-  <!-- <xacro:leg_transmission name="${name}"/> -->
-  <joint name="lh_hip_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="-0.1934 0.0465 0"/>
-    <parent link="trunk"/>
-    <child link="lh_hip_link"/>
-    <axis xyz="1 0 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="23.7" lower="-1.0472" upper="1.0472" velocity="30.1"/>
-  </joint>
-  <link name="lh_hip_link">
-    <visual>
-      <origin rpy="0 3.141592653589793 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/hip.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0.0955 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.046"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="0.0054 0.00194 -0.000105"/>
-      <mass value="0.678"/>
-      <inertia ixx="0.00048" ixy="3.01e-06" ixz="-1.11e-06" iyy="0.000884" iyz="-1.42e-06" izz="0.000596"/>
-    </inertial>
-  </link>
-  <joint name="lh_upper_leg_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0 0.0955 0"/>
-    <parent link="lh_hip_link"/>
-    <child link="lh_upper_leg_link"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="23.7" lower="-1.5708" upper="3.4907" velocity="30.1"/>
-  </joint>
-  <link name="lh_upper_leg_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/thigh.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1065"/>
-      <geometry>
-        <box size="0.213 0.0245 0.034"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="-0.00374 -0.0223 -0.0327"/>
-      <mass value="1.152"/>
-      <inertia ixx="0.00584" ixy="8.72e-05" ixz="-0.000289" iyy="0.0058" iyz="0.000808" izz="0.00103"/>
-    </inertial>
-  </link>
-  <joint name="lh_lower_leg_joint" type="revolute">
-    <origin rpy="0 0 0" xyz="0 0 -0.213"/>
-    <parent link="lh_upper_leg_link"/>
-    <child link="lh_lower_leg_link"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.2"/>
-    <limit effort="35.55" lower="-2.7227" upper="-0.83776" velocity="20.06"/>
-  </joint>
-  <link name="lh_lower_leg_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="file:///home/sjs/genesis-robotics-project/quadruped_controller/install/go2_description/share/go2_description/meshes/calf.dae" scale="1 1 1"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1065"/>
-      <geometry>
-        <box size="0.213 0.016 0.016"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin rpy="0 0 0" xyz="0.00548 -0.000975 -0.115"/>
-      <mass value="0.154"/>
-      <inertia ixx="0.00108" ixy="3.4e-07" ixz="1.72e-05" iyy="0.0011" iyz="8.28e-06" izz="3.29e-05"/>
-    </inertial>
-  </link>
-  <joint name="lh_foot_joint" type="fixed">
-    0
-            
-    <origin rpy="0 0 0" xyz="0 0 -0.213"/>
-    <parent link="lh_lower_leg_link"/>
-    <child link="lh_foot_link"/>
-  </joint>
-  <link name="lh_foot_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <sphere radius="0.01"/>
-      </geometry>
-      <!-- <material name="orange"/> -->
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <sphere radius="0.02"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="0.06"/>
-      <inertia ixx="9.600000000000001e-06" ixy="0.0" ixz="0.0" iyy="9.600000000000001e-06" iyz="0.0" izz="9.600000000000001e-06"/>
-    </inertial>
-  </link>
-  <ros2_control name="lh" type="system">
-    <hardware>
-      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
-    </hardware>
-    <joint name="lh_hip_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="lh_upper_leg_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="lh_lower_leg_joint">
-      <command_interface name="effort"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-  </ros2_control>
-  <!-- <xacro:leg_transmission name="${name}"/> -->
-</robot>
-)";
+    std::string urdf = getURDFfromFile("robot.urdf");
 
     double loop_rate = 200.0;
 
@@ -767,6 +122,51 @@ void QuadrupedController::controlLoop_() {
     std::cout << target_joint_positions[11] << std::endl;
 }
 
+std::vector<std::string> QuadrupedController::getJointNames(){
+    return joint_names_;
+}
+
+std::array<float, 12> QuadrupedController::getJointPositions(){
+    float target_joint_positions[12];
+    geometry::Transformation target_foot_positions[4];
+
+    body_controller_.poseCommand(target_foot_positions, req_pose_);
+
+    auto current_time = std::chrono::steady_clock::now();
+    leg_controller_.velocityCommand(target_foot_positions, req_vel_, stdTimeToChampTime(current_time));
+    kinematics_.inverse(target_joint_positions, target_foot_positions);
+
+    req_vel_.linear.x = 1*speed;
+    req_vel_.linear.y = 0*speed;
+    req_vel_.angular.z = 0*turn;
+
+    std::array<float, 12> joint_arr = {
+      target_joint_positions[0], target_joint_positions[1], target_joint_positions[2], target_joint_positions[3], 
+      target_joint_positions[4], target_joint_positions[5], target_joint_positions[6], target_joint_positions[7],
+      target_joint_positions[8], target_joint_positions[9], target_joint_positions[10], target_joint_positions[11]
+    };
+
+    return joint_arr;
+}
+
+std::string QuadrupedController::getURDFfromFile(std::string urdf_path){
+    std::string urdf_file_path = urdf_path;
+    std::ifstream urdf_file(urdf_file_path);
+
+    if (!urdf_file.is_open()) {
+        std::cerr << "Failed to open URDF file: " << urdf_file_path << std::endl;
+        return "";
+    }
+
+    std::stringstream urdf_buffer;
+    urdf_buffer << urdf_file.rdbuf();
+    std::string urdf = urdf_buffer.str();
+
+    urdf_file.close();
+    
+    return urdf;
+}
+
 int main() {
     auto quadruped_controller = std::make_shared<QuadrupedController>();
 
@@ -788,4 +188,21 @@ int main() {
     }
 
     return 0;
+}
+
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <quadruped_controller.h>
+
+namespace py = pybind11;
+
+PYBIND11_MODULE(quadruped_controller_binding, m) {
+    m.doc() = "Python bindings for quadruped_controller";
+    
+    py::class_<QuadrupedController>(m, "QuadrupedController")
+        .def(py::init<>()) // 기본 생성자 바인딩
+        .def("getJointNames", &QuadrupedController::getJointNames, 
+        "Returns the joint names as a Python list of strings.")
+        .def("getJointPositions", &QuadrupedController::getJointPositions, 
+        "Returns the joint positions as a Python list of floats.");
 }

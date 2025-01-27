@@ -229,6 +229,7 @@ src/quadruped_controller.o: src/quadruped_controller.cpp.o
 # target to build an object file
 src/quadruped_controller.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller.dir/build.make CMakeFiles/quadruped_controller.dir/src/quadruped_controller.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller_binding.dir/build.make CMakeFiles/quadruped_controller_binding.dir/src/quadruped_controller.cpp.o
 .PHONY : src/quadruped_controller.cpp.o
 
 src/quadruped_controller.i: src/quadruped_controller.cpp.i
@@ -237,6 +238,7 @@ src/quadruped_controller.i: src/quadruped_controller.cpp.i
 # target to preprocess a source file
 src/quadruped_controller.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller.dir/build.make CMakeFiles/quadruped_controller.dir/src/quadruped_controller.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller_binding.dir/build.make CMakeFiles/quadruped_controller_binding.dir/src/quadruped_controller.cpp.i
 .PHONY : src/quadruped_controller.cpp.i
 
 src/quadruped_controller.s: src/quadruped_controller.cpp.s
@@ -245,31 +247,8 @@ src/quadruped_controller.s: src/quadruped_controller.cpp.s
 # target to generate assembly for a file
 src/quadruped_controller.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller.dir/build.make CMakeFiles/quadruped_controller.dir/src/quadruped_controller.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller_binding.dir/build.make CMakeFiles/quadruped_controller_binding.dir/src/quadruped_controller.cpp.s
 .PHONY : src/quadruped_controller.cpp.s
-
-src/quadruped_controller_binding.o: src/quadruped_controller_binding.cpp.o
-.PHONY : src/quadruped_controller_binding.o
-
-# target to build an object file
-src/quadruped_controller_binding.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller_binding.dir/build.make CMakeFiles/quadruped_controller_binding.dir/src/quadruped_controller_binding.cpp.o
-.PHONY : src/quadruped_controller_binding.cpp.o
-
-src/quadruped_controller_binding.i: src/quadruped_controller_binding.cpp.i
-.PHONY : src/quadruped_controller_binding.i
-
-# target to preprocess a source file
-src/quadruped_controller_binding.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller_binding.dir/build.make CMakeFiles/quadruped_controller_binding.dir/src/quadruped_controller_binding.cpp.i
-.PHONY : src/quadruped_controller_binding.cpp.i
-
-src/quadruped_controller_binding.s: src/quadruped_controller_binding.cpp.s
-.PHONY : src/quadruped_controller_binding.s
-
-# target to generate assembly for a file
-src/quadruped_controller_binding.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/quadruped_controller_binding.dir/build.make CMakeFiles/quadruped_controller_binding.dir/src/quadruped_controller_binding.cpp.s
-.PHONY : src/quadruped_controller_binding.cpp.s
 
 # Help Target
 help:
@@ -291,9 +270,6 @@ help:
 	@echo "... src/quadruped_controller.o"
 	@echo "... src/quadruped_controller.i"
 	@echo "... src/quadruped_controller.s"
-	@echo "... src/quadruped_controller_binding.o"
-	@echo "... src/quadruped_controller_binding.i"
-	@echo "... src/quadruped_controller_binding.s"
 .PHONY : help
 
 

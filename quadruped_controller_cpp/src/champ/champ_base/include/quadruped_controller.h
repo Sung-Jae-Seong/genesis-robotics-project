@@ -30,6 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 #include <vector>
+#include <array>
+#include <fstream>
+#include <sstream>
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -57,6 +60,9 @@ class QuadrupedController{
 
     std::vector<std::string> joint_names_;
     void controlLoop_();
+    std::string getURDFfromFile(std::string urdf_file_path);
+    std::vector<std::string> getJointNames();
+    std::array<float, 12> getJointPositions();
 
     QuadrupedController();
 };
