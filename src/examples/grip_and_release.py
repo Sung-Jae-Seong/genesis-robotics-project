@@ -22,7 +22,7 @@ cube = scene.add_entity(gs.morphs.Box(size=(0.03, 0.03, 0.05), pos=(0.7, 0.0, 0.
 cube.set_friction(0.1)
 m0609 = scene.add_entity(
     gs.morphs.URDF(
-        file='/home/sjs/genesis/resource/m0609_gripper2.urdf',
+        file='/home/sjs/genesis-robotics-project/resource/m0609_gripper2.urdf',
         fixed=True,
     ),
 )
