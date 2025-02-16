@@ -21,84 +21,14 @@ QuadrupedController::QuadrupedController():
 {
     speed = 0.5;
     turn  = 1.0;
-    std::string knee_orientation;
-    std::string urdf = getURDFfromFile("robot.urdf");
+    urdf = getURDFfromFile("robot.urdf");
 
-    double loop_rate = 200.0;
-
-    gait_config_.pantograph_leg = false;
-    gait_config_.max_linear_velocity_x = 0.3;
-    gait_config_.max_linear_velocity_y = 0.25;
-    gait_config_.max_angular_velocity_z = 0.5;
-    gait_config_.com_x_translation = 0.0;
-    gait_config_.swing_height = 0.04;
-    gait_config_.stance_depth = 0.01;
-    gait_config_.stance_duration = 0.25;
-    gait_config_.nominal_height = 0.225;
-    knee_orientation = ">>";
-
-    gait_config_.knee_orientation = knee_orientation.c_str();
-
-    base_.setGaitConfig(gait_config_);
-
-    std::vector<std::vector<std::string>> links_map = {
-        {"lf_hip_link", "lf_upper_leg_link", "lf_lower_leg_link", "lf_foot_link"},
-        {"rf_hip_link", "rf_upper_leg_link", "rf_lower_leg_link", "rf_foot_link"},
-        {"lh_hip_link", "lh_upper_leg_link", "lh_lower_leg_link", "lh_foot_link"},
-        {"rh_hip_link", "rh_upper_leg_link", "rh_lower_leg_link", "rh_foot_link"}
-    };
-    champ::URDF::loadFromString(base_, links_map, urdf);
-
-    joint_names_ = {
-        "lf_hip_joint", "lf_upper_leg_joint", "lf_lower_leg_joint", "lf_foot_joint",
-        "rf_hip_joint", "rf_upper_leg_joint", "rf_lower_leg_joint", "rf_foot_joint",
-        "lh_hip_joint", "lh_upper_leg_joint", "lh_lower_leg_joint", "lh_foot_joint",
-        "rh_hip_joint", "rh_upper_leg_joint", "rh_lower_leg_joint", "rh_foot_joint"
-    };
-    
-
-    req_pose_.position.z = gait_config_.nominal_height;
-}
-
-void QuadrupedController::controlLoop_() {
-    float target_joint_positions[NUM_JOINTS];
-    geometry::Transformation target_foot_positions[4];
-
-    body_controller_.poseCommand(target_foot_positions, req_pose_);
-
-    auto current_time = std::chrono::steady_clock::now();
-    leg_controller_.velocityCommand(target_foot_positions, req_vel_, stdTimeToChampTime(current_time));
-    kinematics_.inverse(target_joint_positions, target_foot_positions);
-
-    req_vel_.linear.x = 1*speed;
-    req_vel_.linear.y = 0*speed;
-    req_vel_.angular.z = 0*turn;
-
-    std::cout << joint_names_[0] << std::endl;
-    std::cout << joint_names_[1] << std::endl;
-    std::cout << joint_names_[2] << std::endl;
-    std::cout << joint_names_[3] << std::endl;
-    std::cout << joint_names_[4] << std::endl;
-    std::cout << joint_names_[5] << std::endl;
-    std::cout << joint_names_[6] << std::endl;
-    std::cout << joint_names_[7] << std::endl;
-    std::cout << joint_names_[8] << std::endl;
-    std::cout << joint_names_[9] << std::endl;
-    std::cout << joint_names_[10] << std::endl;
-    std::cout << joint_names_[11] << std::endl;
-
-    std::cout << target_joint_positions[0] << std::endl;
-    std::cout << target_joint_positions[1] << std::endl;
-    std::cout << target_joint_positions[2] << std::endl;
-    std::cout << target_joint_positions[3] << std::endl;
-    std::cout << target_joint_positions[4] << std::endl;
-    std::cout << target_joint_positions[5] << std::endl;
-    std::cout << target_joint_positions[6] << std::endl;
-    std::cout << target_joint_positions[7] << std::endl;
-    std::cout << target_joint_positions[9] << std::endl;
-    std::cout << target_joint_positions[9] << std::endl;
-    std::cout << target_joint_positions[10] << std::endl;
-    std::cout << target_joint_positions[11] << std::endl;
+    std::string gait_file   = "./gait_config.yaml";
+    std::string joints_file = "./joints_map.yaml";
+    std::string links_file  = "./links_map.yaml";
+    setGaitConfig(gait_file);
+    setJointsMap(joints_file);
+    setLinksMap(links_file);
 }
 
 std::vector<std::string> QuadrupedController::getJointNames() const {
@@ -107,7 +37,7 @@ std::vector<std::string> QuadrupedController::getJointNames() const {
 
 std::array<float, NUM_JOINTS> QuadrupedController::getJointPositions(){
     float target_joint_positions[NUM_JOINTS];
-    geometry::Transformation target_foot_positions[4];
+    geometry::Transformation target_foot_positions[NUM_FEET];
 
     body_controller_.poseCommand(target_foot_positions, req_pose_);
 
@@ -145,27 +75,43 @@ std::string QuadrupedController::getURDFfromFile(std::string urdf_path){
     return urdf;
 }
 
-int main() {
-    auto quadruped_controller = std::make_shared<QuadrupedController>();
-
-    // 타이머 루프 실행
-    double loop_rate_hz = 200.0; // 200Hz 루프
-    auto period = std::chrono::milliseconds(static_cast<int>(1000 / loop_rate_hz));
-
-    auto start_time = std::chrono::steady_clock::now();
-    while (true) {
-        std::this_thread::sleep_for(period); // 주기적 실행
-        quadruped_controller->controlLoop_();
-
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(now - start_time);
-
-        if (elapsed_time.count() >= 5) {
-            break; // 5초가 지나면 루프 종료
-        }
+void QuadrupedController::setGaitConfig(const std::string& file_path) {
+    try {
+        auto gait_config = getGaitYaml(file_path);
+        gait_config_.pantograph_leg         = std::get<bool>(gait_config["pantograph_leg"]);
+        gait_config_.max_linear_velocity_x  = std::get<double>(gait_config["max_linear_velocity_x"]);
+        gait_config_.max_linear_velocity_y  = std::get<double>(gait_config["max_linear_velocity_y"]);
+        gait_config_.max_angular_velocity_z = std::get<double>(gait_config["max_angular_velocity_z"]);
+        gait_config_.com_x_translation      = std::get<double>(gait_config["com_x_translation"]);
+        gait_config_.swing_height           = std::get<double>(gait_config["swing_height"]);
+        gait_config_.stance_depth           = std::get<double>(gait_config["stance_depth"]);
+        gait_config_.stance_duration        = std::get<double>(gait_config["stance_duration"]);
+        gait_config_.nominal_height         = std::get<double>(gait_config["nominal_height"]);
+        gait_config_.knee_orientation       = ">>";
+        base_.setGaitConfig(gait_config_);
+        req_pose_.position.z = gait_config_.nominal_height;
+    } catch (const std::bad_variant_access& e) {
+        throw std::runtime_error("Gait config type error in " + file_path + ": " + e.what());
+    } catch (const std::exception& e) {
+        throw std::runtime_error("setGaitConfig error: " + std::string(e.what()));
     }
+}
 
-    return 0;
+void QuadrupedController::setJointsMap(const std::string& file_path) {
+    try {
+        joint_names_ = getJointsYaml(file_path);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("setJointNames error: " + std::string(e.what()));
+    }
+}
+
+void QuadrupedController::setLinksMap(const std::string& file_path) {
+    try {
+        links_map = getLinksYaml(file_path);
+        champ::URDF::loadFromString(base_, links_map, urdf);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("setLinksMap error: " + std::string(e.what()));
+    }
 }
 
 #include <pybind11/pybind11.h>

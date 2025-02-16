@@ -18,23 +18,29 @@ See the LICENSE file in the project root for the full license text.
 #include <chrono>
 #include <thread>
 
+#include <yaml_parser.h>
+
 #include <champ/body_controller/body_controller.h>
 #include <champ/utils/urdf_loader.h>
 #include <champ/leg_controller/leg_controller.h>
 #include <champ/kinematics/kinematics.h>
 
 constexpr size_t NUM_JOINTS = 12;
+constexpr size_t NUM_FEET = 4;
 
 class QuadrupedController{
   public:
     QuadrupedController();
   
-    void controlLoop_();
+    void setGaitConfig(const std::string& file_path);
+    void setJointsMap(const std::string& file_path);
+    void setLinksMap(const std::string& file_path);
     std::vector<std::string> getJointNames () const;
     std::array<float, NUM_JOINTS> getJointPositions();
     std::string getURDFfromFile(std::string urdf_file_path);
 
     std::vector<std::string> joint_names_;
+    std::vector<std::vector<std::string>> links_map;
 
     champ::Velocities req_vel_;
     champ::Pose req_pose_;
@@ -46,6 +52,7 @@ class QuadrupedController{
 
     float speed;
     float turn;
+    std::string urdf;
 };
 
 #endif  // QUADRUPED_CONTROLLER_H
