@@ -21,7 +21,12 @@ QuadrupedController::QuadrupedController():
 {
     speed = 0.5;
     turn  = 1.0;
-    urdf.clear(); 
+
+    req_vel_.linear.x  = 0;
+    req_vel_.linear.y  = 0;
+    req_vel_.angular.z = 0;
+
+    urdf.clear();
 }
 
 std::vector<std::string> QuadrupedController::getJointNames() const {
@@ -37,10 +42,6 @@ std::array<float, NUM_JOINTS> QuadrupedController::getJointPositions(){
     auto current_time = std::chrono::steady_clock::now();
     leg_controller_.velocityCommand(target_foot_positions, req_vel_, stdTimeToChampTime(current_time));
     kinematics_.inverse(target_joint_positions, target_foot_positions);
-
-    req_vel_.linear.x  = 1 * speed;
-    req_vel_.linear.y  = 0 * speed;
-    req_vel_.angular.z = 0 * turn;
 
     std::array<float, NUM_JOINTS> joint_arr;
     for (int i = 0; i < NUM_JOINTS; ++i) {
@@ -104,6 +105,28 @@ void QuadrupedController::setLinksMap(const std::string& file_path) {
     }
 }
 
+void QuadrupedController::setVelocityCommand(float linear_x, float linear_y, float linear_z, float angular_z) {
+    req_vel_.linear.x  = linear_x * speed;
+    req_vel_.linear.y  = linear_y * speed;
+    req_vel_.linear.z  = linear_z * speed;
+    req_vel_.angular.z = angular_z * turn;
+}
+
+void QuadrupedController::setSpeedValue(float new_speed) {
+    speed = new_speed;
+}
+
+void QuadrupedController::setTurnValue(float new_turn) {
+    turn = new_turn;
+}
+
+float QuadrupedController::getSpeedValue() const {
+    return speed;
+}
+float QuadrupedController::getTurnValue() const {
+    return turn;
+}
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <quadruped_controller.h>
@@ -115,16 +138,27 @@ PYBIND11_MODULE(quadruped_controller_binding, m) {
     
     py::class_<QuadrupedController>(m, "QuadrupedController")
         .def(py::init<>()) // 기본 생성자 바인딩
-        .def("setURDFfromFile", &QuadrupedController::setURDFfromFile,      // setURDFfromFile
+        .def("setURDFfromFile", &QuadrupedController::setURDFfromFile,        // setURDFfromFile
             "Reads URDF from the specified file and stores it internally.")
-       .def("setGaitConfig", &QuadrupedController::setGaitConfig,           // setGaitConfig
+       .def("setGaitConfig", &QuadrupedController::setGaitConfig,             // setGaitConfig
             "Loads gait config from a YAML file.")
-       .def("setJointsMap", &QuadrupedController::setJointsMap,             // setJointsMap
+       .def("setJointsMap", &QuadrupedController::setJointsMap,               // setJointsMap
             "Loads joint names from a YAML file.")
-       .def("setLinksMap", &QuadrupedController::setLinksMap,               // setLinksMap
+       .def("setLinksMap", &QuadrupedController::setLinksMap,                 // setLinksMap
             "Loads link descriptions from a YAML file and applies them to the URDF base.")
-        .def("getJointNames", &QuadrupedController::getJointNames,          // getJointNames
+        .def("getJointNames", &QuadrupedController::getJointNames,            // getJointNames
         "Returns the joint names as a Python list of strings.")
-        .def("getJointPositions", &QuadrupedController::getJointPositions,  // getJointPositions
-        "Returns the joint positions as a Python list of floats.");
+        .def("getJointPositions", &QuadrupedController::getJointPositions,    // getJointPositions
+        "Returns the joint positions as a Python list of floats.")
+        .def("setVelocityCommand", &QuadrupedController::setVelocityCommand,  // setVelocityCommand
+            "Sets the velocity command for the quadruped.",
+            py::arg("linear_x"), py::arg("linear_y"), py::arg("linear_z"), py::arg("angular_z"))
+        .def("setSpeedValue", &QuadrupedController::setSpeedValue,            // setSpeedValue
+            "Sets the base speed value for movement.",
+            py::arg("speed"))
+        .def("setTurnValue", &QuadrupedController::setTurnValue,              // setTurnValue
+            "Sets the base turn rate value.",
+            py::arg("turn"))
+        .def("getSpeedValue", &QuadrupedController::getSpeedValue)            // getSpeedValue
+        .def("getTurnValue", &QuadrupedController::getTurnValue);             // getTurnValue
 }

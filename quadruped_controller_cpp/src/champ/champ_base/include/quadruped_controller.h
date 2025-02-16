@@ -36,6 +36,11 @@ class QuadrupedController{
     void setGaitConfig(const std::string& file_path);
     void setJointsMap(const std::string& file_path);
     void setLinksMap(const std::string& file_path);
+    void setVelocityCommand(float linear_x, float linear_y, float linear_z, float angular_z);
+    void setSpeedValue(float speed);
+    void setTurnValue(float turn);
+    float getSpeedValue() const;
+    float getTurnValue() const;
     std::vector<std::string> getJointNames () const;
     std::array<float, NUM_JOINTS> getJointPositions();
 

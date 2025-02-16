@@ -68,6 +68,10 @@ robot.set_dofs_kv(
     dofs_idx_local=jnt_idx
 )
 
+controller.setVelocityCommand(0, 0, 0, 0)
+
+import time
+start = time.time()
 
 while True:
 # 첫 번째 point의 position 값 추출
@@ -78,5 +82,10 @@ while True:
         position=np.array(positions),
         dofs_idx_local=jnt_idx
     )
+    if time.time() - start > 3:
+        controller.setVelocityCommand(1, 0, 0, 0)
+
+    if time.time() - start > 5:
+        controller.setSpeedValue(10.0)
 
     scene.step()
