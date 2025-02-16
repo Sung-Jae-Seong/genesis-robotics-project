@@ -32,12 +32,12 @@ class QuadrupedController{
   public:
     QuadrupedController();
   
+    void setURDFfromFile(std::string urdf_file_path);
     void setGaitConfig(const std::string& file_path);
     void setJointsMap(const std::string& file_path);
     void setLinksMap(const std::string& file_path);
     std::vector<std::string> getJointNames () const;
     std::array<float, NUM_JOINTS> getJointPositions();
-    std::string getURDFfromFile(std::string urdf_file_path);
 
     std::vector<std::string> joint_names_;
     std::vector<std::vector<std::string>> links_map;

@@ -21,14 +21,7 @@ QuadrupedController::QuadrupedController():
 {
     speed = 0.5;
     turn  = 1.0;
-    urdf = getURDFfromFile("robot.urdf");
-
-    std::string gait_file   = "./gait_config.yaml";
-    std::string joints_file = "./joints_map.yaml";
-    std::string links_file  = "./links_map.yaml";
-    setGaitConfig(gait_file);
-    setJointsMap(joints_file);
-    setLinksMap(links_file);
+    urdf.clear(); 
 }
 
 std::vector<std::string> QuadrupedController::getJointNames() const {
@@ -57,22 +50,19 @@ std::array<float, NUM_JOINTS> QuadrupedController::getJointPositions(){
     return joint_arr;
 }
 
-std::string QuadrupedController::getURDFfromFile(std::string urdf_path){
+void QuadrupedController::setURDFfromFile(std::string urdf_path){
     std::string urdf_file_path = urdf_path;
     std::ifstream urdf_file(urdf_file_path);
 
     if (!urdf_file.is_open()) {
         std::cerr << "Failed to open URDF file: " << urdf_file_path << std::endl;
-        return "";
     }
 
     std::stringstream urdf_buffer;
     urdf_buffer << urdf_file.rdbuf();
-    std::string urdf = urdf_buffer.str();
+    urdf = urdf_buffer.str();
 
     urdf_file.close();
-    
-    return urdf;
 }
 
 void QuadrupedController::setGaitConfig(const std::string& file_path) {
@@ -125,8 +115,16 @@ PYBIND11_MODULE(quadruped_controller_binding, m) {
     
     py::class_<QuadrupedController>(m, "QuadrupedController")
         .def(py::init<>()) // 기본 생성자 바인딩
-        .def("getJointNames", &QuadrupedController::getJointNames, 
+        .def("setURDFfromFile", &QuadrupedController::setURDFfromFile,      // setURDFfromFile
+            "Reads URDF from the specified file and stores it internally.")
+       .def("setGaitConfig", &QuadrupedController::setGaitConfig,           // setGaitConfig
+            "Loads gait config from a YAML file.")
+       .def("setJointsMap", &QuadrupedController::setJointsMap,             // setJointsMap
+            "Loads joint names from a YAML file.")
+       .def("setLinksMap", &QuadrupedController::setLinksMap,               // setLinksMap
+            "Loads link descriptions from a YAML file and applies them to the URDF base.")
+        .def("getJointNames", &QuadrupedController::getJointNames,          // getJointNames
         "Returns the joint names as a Python list of strings.")
-        .def("getJointPositions", &QuadrupedController::getJointPositions, 
+        .def("getJointPositions", &QuadrupedController::getJointPositions,  // getJointPositions
         "Returns the joint positions as a Python list of floats.");
 }

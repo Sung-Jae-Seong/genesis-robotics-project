@@ -4,9 +4,17 @@ import genesis as gs
 
 from quadruped_controller_binding import QuadrupedController
 
+controller = QuadrupedController()
+controller.setURDFfromFile("robot.urdf")
+controller.setGaitConfig("gait_config.yaml")
+controller.setJointsMap("joints_map.yaml")
+controller.setLinksMap("links_map.yaml")
+joint_names = controller.getJointNames()
+print("Joint Names:", joint_names)
+
 os.environ['PYOPENGL_PLATFORM'] = 'glx'
 
-gs.init(backend=gs.cpu)
+gs.init()
 scene = gs.Scene(
     show_viewer=True,
     sim_options=gs.options.SimOptions(
@@ -59,12 +67,6 @@ robot.set_dofs_kv(
     kv=velocity_gains,
     dofs_idx_local=jnt_idx
 )
-
- 
-controller = QuadrupedController()
-
-joint_names = controller.getJointNames()
-print("Joint Names:", joint_names)
 
 
 while True:
