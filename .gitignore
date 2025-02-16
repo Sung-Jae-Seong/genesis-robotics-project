@@ -11,3 +11,4 @@ quadruped_controller_cpp/log
 quadruped_controller_cpp/src/champ/champ/build
 quadruped_controller_cpp/src/champ/champ_base/build
 .vscode/
+note/

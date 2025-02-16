@@ -1,29 +1,8 @@
 /*
 Copyright (c) 2019-2020, Juan Miguel Jimeno
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the copyright holder nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) 2025, SJS
+This file is licensed under the BSD-3-Clause License.
+See the LICENSE file in the project root for the full license text.
 */
 
 #include <quadruped_controller.h>
@@ -32,7 +11,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 champ::PhaseGenerator::Time stdTimeToChampTime(const std::chrono::steady_clock::time_point& time) {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(time.time_since_epoch());
-    return duration.count(); // 마이크로초 단위 반환
+    return duration.count();
 }
 
 QuadrupedController::QuadrupedController():
@@ -41,7 +20,7 @@ QuadrupedController::QuadrupedController():
     kinematics_(base_)
 {
     speed = 0.5;
-    turn = 1.0;
+    turn  = 1.0;
     std::string knee_orientation;
     std::string urdf = getURDFfromFile("robot.urdf");
 
@@ -70,19 +49,19 @@ QuadrupedController::QuadrupedController():
     };
     champ::URDF::loadFromString(base_, links_map, urdf);
 
-    std::map<std::string, std::vector<std::string>> joints_map = {
-        {"left_front", {"lf_hip_joint", "lf_upper_leg_joint", "lf_lower_leg_joint", "lf_foot_joint"}},
-        {"right_front", {"rf_hip_joint", "rf_upper_leg_joint", "rf_lower_leg_joint", "rf_foot_joint"}},
-        {"left_hind", {"lh_hip_joint", "lh_upper_leg_joint", "lh_lower_leg_joint", "lh_foot_joint"}},
-        {"right_hind", {"rh_hip_joint", "rh_upper_leg_joint", "rh_lower_leg_joint", "rh_foot_joint"}}
+    joint_names_ = {
+        "lf_hip_joint", "lf_upper_leg_joint", "lf_lower_leg_joint", "lf_foot_joint",
+        "rf_hip_joint", "rf_upper_leg_joint", "rf_lower_leg_joint", "rf_foot_joint",
+        "lh_hip_joint", "lh_upper_leg_joint", "lh_lower_leg_joint", "lh_foot_joint",
+        "rh_hip_joint", "rh_upper_leg_joint", "rh_lower_leg_joint", "rh_foot_joint"
     };
-    joint_names_ = champ::URDF::getJointNames(joints_map);
+    
 
     req_pose_.position.z = gait_config_.nominal_height;
 }
 
 void QuadrupedController::controlLoop_() {
-    float target_joint_positions[12];
+    float target_joint_positions[NUM_JOINTS];
     geometry::Transformation target_foot_positions[4];
 
     body_controller_.poseCommand(target_foot_positions, req_pose_);
@@ -103,7 +82,7 @@ void QuadrupedController::controlLoop_() {
     std::cout << joint_names_[5] << std::endl;
     std::cout << joint_names_[6] << std::endl;
     std::cout << joint_names_[7] << std::endl;
-    std::cout << joint_names_[9] << std::endl;
+    std::cout << joint_names_[8] << std::endl;
     std::cout << joint_names_[9] << std::endl;
     std::cout << joint_names_[10] << std::endl;
     std::cout << joint_names_[11] << std::endl;
@@ -122,12 +101,12 @@ void QuadrupedController::controlLoop_() {
     std::cout << target_joint_positions[11] << std::endl;
 }
 
-std::vector<std::string> QuadrupedController::getJointNames(){
+std::vector<std::string> QuadrupedController::getJointNames() const {
     return joint_names_;
 }
 
-std::array<float, 12> QuadrupedController::getJointPositions(){
-    float target_joint_positions[12];
+std::array<float, NUM_JOINTS> QuadrupedController::getJointPositions(){
+    float target_joint_positions[NUM_JOINTS];
     geometry::Transformation target_foot_positions[4];
 
     body_controller_.poseCommand(target_foot_positions, req_pose_);
@@ -136,15 +115,14 @@ std::array<float, 12> QuadrupedController::getJointPositions(){
     leg_controller_.velocityCommand(target_foot_positions, req_vel_, stdTimeToChampTime(current_time));
     kinematics_.inverse(target_joint_positions, target_foot_positions);
 
-    req_vel_.linear.x = 1*speed;
-    req_vel_.linear.y = 0*speed;
-    req_vel_.angular.z = 0*turn;
+    req_vel_.linear.x  = 1 * speed;
+    req_vel_.linear.y  = 0 * speed;
+    req_vel_.angular.z = 0 * turn;
 
-    std::array<float, 12> joint_arr = {
-      target_joint_positions[0], target_joint_positions[1], target_joint_positions[2], target_joint_positions[3], 
-      target_joint_positions[4], target_joint_positions[5], target_joint_positions[6], target_joint_positions[7],
-      target_joint_positions[8], target_joint_positions[9], target_joint_positions[10], target_joint_positions[11]
-    };
+    std::array<float, NUM_JOINTS> joint_arr;
+    for (int i = 0; i < NUM_JOINTS; ++i) {
+        joint_arr[i] = target_joint_positions[i];
+    }
 
     return joint_arr;
 }

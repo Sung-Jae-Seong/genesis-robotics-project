@@ -1,6 +1,0 @@
-/home/sjs/genesis-robotics-project/quadruped_controller_cpp/src/champ/champ/build/CMakeFiles/edit_cache.dir
-/home/sjs/genesis-robotics-project/quadruped_controller_cpp/src/champ/champ/build/CMakeFiles/rebuild_cache.dir
-/home/sjs/genesis-robotics-project/quadruped_controller_cpp/src/champ/champ/build/CMakeFiles/list_install_components.dir
-/home/sjs/genesis-robotics-project/quadruped_controller_cpp/src/champ/champ/build/CMakeFiles/install.dir
-/home/sjs/genesis-robotics-project/quadruped_controller_cpp/src/champ/champ/build/CMakeFiles/install/local.dir
-/home/sjs/genesis-robotics-project/quadruped_controller_cpp/src/champ/champ/build/CMakeFiles/install/strip.dir

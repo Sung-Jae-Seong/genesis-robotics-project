@@ -96,21 +96,6 @@ namespace champ
                 }
             }
         }
-
-        std::vector<std::string> getJointNames(const std::map<std::string, std::vector<std::string>> joints_map)
-        {
-            std::vector<std::string> joint_names;
-            
-            for (const auto& [group, joints] : joints_map)
-            {
-                for (const auto& joint : joints)
-                {
-                    joint_names.push_back(joint);
-                }
-            }   
-
-            return joint_names;
-        }
     }
 }
 
