@@ -73,6 +73,7 @@ controller.setVelocityCommand(0, 0, 0, 0)
 import time
 start = time.time()
 
+last_time = time.time() 
 while True:
 # 첫 번째 point의 position 값 추출
     positions = controller.getJointPositions()
@@ -82,10 +83,11 @@ while True:
         position=np.array(positions),
         dofs_idx_local=jnt_idx
     )
-    if time.time() - start > 3:
-        controller.setVelocityCommand(1, 0, 0, 0)
-
     if time.time() - start > 5:
-        controller.setSpeedValue(10.0)
+        controller.setVelocityCommand(1, 0, 0, 0)
+        controller.setSpeedValue(0.1)
+
+    if time.time() - start > 10:
+        controller.setSpeedValue(0.5)
 
     scene.step()

@@ -19,8 +19,8 @@ QuadrupedController::QuadrupedController():
     leg_controller_(base_, stdTimeToChampTime(std::chrono::steady_clock::now())),
     kinematics_(base_)
 {
-    speed = 0.5;
-    turn  = 1.0;
+    speed = 0.1;
+    turn  = 0.1;
 
     req_vel_.linear.x  = 0;
     req_vel_.linear.y  = 0;
@@ -113,10 +113,14 @@ void QuadrupedController::setVelocityCommand(float linear_x, float linear_y, flo
 }
 
 void QuadrupedController::setSpeedValue(float new_speed) {
+    req_vel_.linear.x  *= (new_speed/speed);
+    req_vel_.linear.y  *= (new_speed/speed);
+    req_vel_.linear.z  *= (new_speed/speed);
     speed = new_speed;
 }
 
 void QuadrupedController::setTurnValue(float new_turn) {
+    req_vel_.angular.z *= (new_turn/turn);
     turn = new_turn;
 }
 
