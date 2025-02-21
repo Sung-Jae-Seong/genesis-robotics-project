@@ -68,7 +68,7 @@ robot.set_dofs_kv(
     dofs_idx_local=jnt_idx
 )
 
-controller.setVelocityCommand(0, 0, 0, 0)
+controller.setVelocityCommand(0, 0, 0)
 
 import time
 start = time.time()
@@ -84,7 +84,7 @@ while True:
         dofs_idx_local=jnt_idx
     )
     if time.time() - start > 5:
-        controller.setVelocityCommand(1, 0, 0, 0)
+        controller.setVelocityCommand(1, 0, 0)
         controller.setSpeedValue(0.1)
 
     if time.time() - start > 10:

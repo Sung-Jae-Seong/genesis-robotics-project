@@ -105,17 +105,15 @@ void QuadrupedController::setLinksMap(const std::string& file_path) {
     }
 }
 
-void QuadrupedController::setVelocityCommand(float linear_x, float linear_y, float linear_z, float angular_z) {
+void QuadrupedController::setVelocityCommand(float linear_x, float linear_y, float angular_z) {
     req_vel_.linear.x  = linear_x * speed;
     req_vel_.linear.y  = linear_y * speed;
-    req_vel_.linear.z  = linear_z * speed;
     req_vel_.angular.z = angular_z * turn;
 }
 
 void QuadrupedController::setSpeedValue(float new_speed) {
     req_vel_.linear.x  *= (new_speed/speed);
     req_vel_.linear.y  *= (new_speed/speed);
-    req_vel_.linear.z  *= (new_speed/speed);
     speed = new_speed;
 }
 
@@ -156,7 +154,7 @@ PYBIND11_MODULE(quadruped_controller_binding, m) {
         "Returns the joint positions as a Python list of floats.")
         .def("setVelocityCommand", &QuadrupedController::setVelocityCommand,  // setVelocityCommand
             "Sets the velocity command for the quadruped.",
-            py::arg("linear_x"), py::arg("linear_y"), py::arg("linear_z"), py::arg("angular_z"))
+            py::arg("linear_x"), py::arg("linear_y"), py::arg("angular_z"))
         .def("setSpeedValue", &QuadrupedController::setSpeedValue,            // setSpeedValue
             "Sets the base speed value for movement.",
             py::arg("speed"))
