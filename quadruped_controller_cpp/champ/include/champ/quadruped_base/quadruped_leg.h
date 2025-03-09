@@ -35,16 +35,12 @@ namespace champ
 {
     class QuadrupedLeg
     {
-        unsigned int no_of_links_;
-        
+
         geometry::Transformation zero_stance_;
-        float center_to_nominal_;
 
         unsigned int id_;
 
         unsigned long last_touchdown_;
-
-        bool in_contact_;
 
         int knee_direction_;
         bool is_pantograph_;
@@ -53,11 +49,8 @@ namespace champ
         
         public:
             QuadrupedLeg():
-                no_of_links_(0),
-                center_to_nominal_(0),
                 id_(0),
                 last_touchdown_(0),
-                in_contact_(1),
                 knee_direction_(0),
                 is_pantograph_(false),
                 gait_phase_(1)
@@ -100,21 +93,6 @@ namespace champ
                 return foot_position;
             }
 
-            void joints(float hip_joint, float upper_leg_joint, float lower_leg_joint)
-            { 
-                hip.theta(hip_joint);
-                upper_leg.theta(upper_leg_joint);
-                lower_leg.theta(lower_leg_joint);
-            }
-
-            void joints(float *joints)
-            {
-                for(unsigned int i = 0; i < 3; i++)
-                {
-                    joint_chain[i]->theta(joints[i]);
-                }
-            }
-
             geometry::Transformation zero_stance()
             {
                 zero_stance_.X() = hip.x() + upper_leg.x() + gait_config->com_x_translation;
@@ -150,16 +128,6 @@ namespace champ
             void id(unsigned int id)
             {
                 id_ = id;
-            }
-
-            void in_contact(bool in_contact)
-            {
-                in_contact_ = in_contact;
-            }
-
-            bool in_contact()
-            {
-                return in_contact_;
             }
 
             void gait_phase(bool phase)

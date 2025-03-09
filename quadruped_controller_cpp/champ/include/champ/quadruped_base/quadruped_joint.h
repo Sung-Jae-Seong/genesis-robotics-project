@@ -34,14 +34,6 @@ namespace champ
 {
     class Joint
     {
-        // float translation_.x; 
-        // float translation_.y; 
-        // float translation_.z; 
-
-        // float rotation_.roll; 
-        // float rotation_.pitch; 
-        // float rotation_.yaw;
-
         float theta_;
 
         champ::Point translation_;
@@ -82,24 +74,6 @@ namespace champ
                 translation_.z = z;
             }
 
-            void setRotation(float roll, float pitch, float yaw)
-            {
-                rotation_.roll = roll;
-                rotation_.pitch = pitch;
-                rotation_.yaw = yaw;
-            }
-
-            void setOrigin(float x, float y, float z,
-                    float roll, float pitch, float yaw)
-            {
-                translation_.x = x;
-                translation_.y = y;
-                translation_.z = z;
-                rotation_.roll = roll;
-                rotation_.pitch = pitch;
-                rotation_.yaw = yaw;
-            }
-
             const float x() const
             {
                 return translation_.x;
@@ -129,36 +103,6 @@ namespace champ
             {
                 return rotation_.yaw;
             }
-
-            // void x(float x)
-            // {
-            //     translation_.x = x;
-            // }
-
-            // void y(float y)
-            // {
-            //     translation_.y = y;
-            // }
-
-            // void z(float z)
-            // {
-            //     translation_.z = z;
-            // }
-
-            // void roll(float roll)
-            // {
-            //     rotation_.roll = roll;
-            // }
-
-            // void pitch(float pitch)
-            // {
-            //     rotation_.pitch = pitch;
-            // }
-
-            // void yaw(float yaw)
-            // {
-            //     rotation_.yaw = yaw;
-            // }
     };
 }
 #endif

@@ -74,37 +74,6 @@ namespace champ
 
                 setGaitConfig(gait_conf);
             }        
-            
-            void getJointPositions(float *joint_positions)
-            {
-                unsigned int total_joints = 0;
-
-                for(unsigned int i = 0; i < 4; i++)
-                {
-                    joint_positions[total_joints++] = legs[i]->hip.theta();
-                    joint_positions[total_joints++] = legs[i]->upper_leg.theta();
-                    joint_positions[total_joints++] = legs[i]->lower_leg.theta();
-                }
-            }
-
-            void getFootPositions(geometry::Transformation *foot_positions)
-            {
-                for(unsigned int i = 0; i < 4; i++)
-                {
-                    foot_positions[i] = legs[i]->foot_from_base();
-                }
-            }
-
-            void updateJointPositions(float joints[12])
-            {
-                for(unsigned int i = 0; i < 4; i++)
-                {
-                    int index = i * 3;
-                    legs[i]->hip.theta(joints[index]);
-                    legs[i]->upper_leg.theta(joints[index + 1]);
-                    legs[i]->lower_leg.theta(joints[index + 2]);
-                }
-            }
 
             void setGaitConfig(champ::GaitConfig &gait_conf)
             {
