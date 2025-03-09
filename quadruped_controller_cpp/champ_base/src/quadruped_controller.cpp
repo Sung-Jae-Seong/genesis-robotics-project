@@ -5,6 +5,7 @@ This file is licensed under the BSD-3-Clause License.
 See the LICENSE file in the project root for the full license text.
 */
 
+//quadruped_controller.cpp
 #include <quadruped_controller.h>
 #include <map>
 #include <iostream>
@@ -69,7 +70,6 @@ void QuadrupedController::setURDFfromFile(std::string urdf_path){
 void QuadrupedController::setGaitConfig(const std::string& file_path) {
     try {
         auto gait_config = getGaitYaml(file_path);
-        gait_config_.pantograph_leg         = std::get<bool>(gait_config["pantograph_leg"]);
         gait_config_.max_linear_velocity_x  = std::get<double>(gait_config["max_linear_velocity_x"]);
         gait_config_.max_linear_velocity_y  = std::get<double>(gait_config["max_linear_velocity_y"]);
         gait_config_.max_angular_velocity_z = std::get<double>(gait_config["max_angular_velocity_z"]);
@@ -78,7 +78,6 @@ void QuadrupedController::setGaitConfig(const std::string& file_path) {
         gait_config_.stance_depth           = std::get<double>(gait_config["stance_depth"]);
         gait_config_.stance_duration        = std::get<double>(gait_config["stance_duration"]);
         gait_config_.nominal_height         = std::get<double>(gait_config["nominal_height"]);
-        gait_config_.knee_orientation       = ">>";
         base_.setGaitConfig(gait_config_);
         req_pose_.position.z = gait_config_.nominal_height;
     } catch (const std::bad_variant_access& e) {
@@ -129,6 +128,27 @@ float QuadrupedController::getTurnValue() const {
     return turn;
 }
 
+void QuadrupedController::setSwingHeight(float value) {
+    gait_config_.setSwingHeight(value);
+    base_.setGaitConfig(gait_config_);
+}
+
+void QuadrupedController::setStanceDepth(float value) {
+    gait_config_.setStanceDepth(value);
+    base_.setGaitConfig(gait_config_);
+}
+
+void QuadrupedController::setStanceDuration(float value) {
+    gait_config_.setStanceDuration(value);
+    base_.setGaitConfig(gait_config_);
+}
+
+void QuadrupedController::setNominalHeight(float value) {
+    gait_config_.setNominalHeight(value);
+    req_pose_.position.z = 0.0;
+    base_.setGaitConfig(gait_config_);
+}
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <quadruped_controller.h>
@@ -161,6 +181,16 @@ PYBIND11_MODULE(quadruped_controller, m) {
         .def("setTurnValue", &QuadrupedController::setTurnValue,              // setTurnValue
             "Sets the base turn rate value.",
             py::arg("turn"))
-        .def("getSpeedValue", &QuadrupedController::getSpeedValue)            // getSpeedValue
-        .def("getTurnValue", &QuadrupedController::getTurnValue);             // getTurnValue
+        .def("getSpeedValue", &QuadrupedController::getSpeedValue,            // getSpeedValue
+            "Returns the current base speed value.")
+        .def("getTurnValue", &QuadrupedController::getTurnValue,              // getTurnValue
+            "Returns the current base turn rate value.")
+        .def("setSwingHeight", &QuadrupedController::setSwingHeight,          // setSwingHeight
+            "Sets the swing height for the quadruped.")
+        .def("setStanceDepth", &QuadrupedController::setStanceDepth,          // setStanceDepth
+            "Sets the stance depth for the quadruped.")
+        .def("setStanceDuration", &QuadrupedController::setStanceDuration,    // setStanceDuration
+            "Sets the stance duration for the quadruped.")
+        .def("setNominalHeight", &QuadrupedController::setNominalHeight,      // setNominalHeight
+            "Sets the nominal height for the quadruped.");
 }

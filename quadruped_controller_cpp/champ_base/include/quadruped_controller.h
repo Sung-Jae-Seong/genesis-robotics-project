@@ -24,6 +24,7 @@ See the LICENSE file in the project root for the full license text.
 #include <champ/utils/urdf_loader.h>
 #include <champ/leg_controller/leg_controller.h>
 #include <champ/kinematics/kinematics.h>
+#include <quadruped_base/quadruped_components.h>
 
 constexpr size_t NUM_JOINTS = 12;
 constexpr size_t NUM_FEET = 4;
@@ -41,6 +42,11 @@ class QuadrupedController{
     void setTurnValue(float turn);
     float getSpeedValue() const;
     float getTurnValue() const;
+    void setSwingHeight(float value);
+    void setStanceDepth(float value);
+    void setStanceDuration(float value);
+    void setNominalHeight(float value);
+
     std::vector<std::string> getJointNames () const;
     std::array<float, NUM_JOINTS> getJointPositions();
 

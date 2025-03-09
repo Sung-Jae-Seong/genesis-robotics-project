@@ -82,11 +82,17 @@ while True:
         position=np.array(positions),
         dofs_idx_local=jnt_idx
     )
-    if time.time() - start > 5:
+    if time.time() - start > 3:
         controller.setVelocityCommand(1, 0, 0)
         controller.setSpeedValue(0.1)
 
-    if time.time() - start > 10:
+    if time.time() - start > 6:
         controller.setSpeedValue(0.5)
+
+    if time.time() - start > 9:
+        controller.setSwingHeight(0.0)
+        controller.setStanceDepth(0.0)
+        controller.setStanceDuration(0.0)
+        controller.setNominalHeight(0.0)
 
     scene.step()

@@ -1,5 +1,4 @@
 gait_config:
-  pantograph_leg: false
   max_linear_velocity_x: 0.3
   max_linear_velocity_y: 0.25
   max_angular_velocity_z: 0.5

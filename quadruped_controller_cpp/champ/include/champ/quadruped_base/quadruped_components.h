@@ -200,6 +200,22 @@ namespace champ
             float stance_depth;
             float stance_duration;
             float nominal_height;
+        
+            void setSwingHeight(float value) {
+                swing_height = value;
+            }
+
+            void setStanceDepth(float value){
+                stance_depth = value;
+            }
+            
+            void setStanceDuration(float value){
+                stance_duration = value;
+            }
+
+            void setNominalHeight(float value){
+                nominal_height = value;
+            }
     };
 }
 
