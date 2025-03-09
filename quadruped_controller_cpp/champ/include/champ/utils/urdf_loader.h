@@ -90,7 +90,6 @@ namespace champ
                 std::cout << "Failed to parse urdf string" << std::endl;
             }
             else{
-                std::cout << "Successfully parsed urdf file" << std::endl;
                 for (int i = 0; i < 4; i++) {
                     fillLeg(base.legs[i], model, links_map[i]);
                 }

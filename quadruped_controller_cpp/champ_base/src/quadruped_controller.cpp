@@ -135,7 +135,7 @@ float QuadrupedController::getTurnValue() const {
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(quadruped_controller_binding, m) {
+PYBIND11_MODULE(quadruped_controller, m) {
     m.doc() = "Python bindings for quadruped_controller";
     
     py::class_<QuadrupedController>(m, "QuadrupedController")

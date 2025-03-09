@@ -2,7 +2,7 @@ import os
 import numpy as np
 import genesis as gs
 
-from quadruped_controller_binding import QuadrupedController
+from quadruped_controller import QuadrupedController
 
 controller = QuadrupedController()
 controller.setURDFfromFile("robot.urdf")
@@ -10,7 +10,6 @@ controller.setGaitConfig("gait_config.yaml")
 controller.setJointsMap("joints_map.yaml")
 controller.setLinksMap("links_map.yaml")
 joint_names = controller.getJointNames()
-print("Joint Names:", joint_names)
 
 os.environ['PYOPENGL_PLATFORM'] = 'glx'
 
