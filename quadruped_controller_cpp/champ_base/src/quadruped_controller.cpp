@@ -9,6 +9,12 @@ See the LICENSE file in the project root for the full license text.
 #include <quadruped_controller.h>
 #include <map>
 #include <iostream>
+#include <fstream>
+
+#define DEFAULT_URDF_PATH "robot.urdf"
+#define DEFAULT_GAIT_CONFIG_PATH "gait_config.yaml"
+#define DEFAULT_JOINTS_MAP_PATH "joints_map.yaml"
+#define DEFAULT_LINKS_MAP_PATH "links_map.yaml"
 
 champ::PhaseGenerator::Time stdTimeToChampTime(const std::chrono::steady_clock::time_point& time) {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(time.time_since_epoch());
@@ -28,6 +34,18 @@ QuadrupedController::QuadrupedController():
     req_vel_.angular.z = 0;
 
     urdf.clear();
+
+    try
+    {
+        setURDFfromFile(DEFAULT_URDF_PATH);
+        setGaitConfig(DEFAULT_GAIT_CONFIG_PATH);
+        setJointsMap(DEFAULT_JOINTS_MAP_PATH);
+        setLinksMap(DEFAULT_LINKS_MAP_PATH);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "[Warning] Default file loading failed: " << e.what() << std::endl;
+    }
 }
 
 std::vector<std::string> QuadrupedController::getJointNames() const {

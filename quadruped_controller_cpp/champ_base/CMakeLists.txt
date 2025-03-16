@@ -9,6 +9,16 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
+set(URDF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/robot.urdf")
+set(GAIT_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/gait_config.yaml")
+set(JOINTS_MAP_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/joints_map.yaml")
+set(LINKS_MAP_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/links_map.yaml")
+
+configure_file(${URDF_FILE} ${CMAKE_CURRENT_BINARY_DIR}/resource/robot_urdf.h COPYONLY)
+configure_file(${GAIT_CONFIG_FILE} ${CMAKE_CURRENT_BINARY_DIR}/resource/gait_config.h COPYONLY)
+configure_file(${JOINTS_MAP_FILE} ${CMAKE_CURRENT_BINARY_DIR}/resource/joints_map.h COPYONLY)
+configure_file(${LINKS_MAP_FILE} ${CMAKE_CURRENT_BINARY_DIR}/resource/links_map.h COPYONLY)
+
 pybind11_add_module(quadruped_controller 
   src/quadruped_controller.cpp
   src/yaml_parser.cpp
