@@ -47,5 +47,5 @@ if __name__ == "__main__":
 
 """
 # evaluation
-python examples/locomotion/go2_eval.py -e go2-walking -v --ckpt 100
+python3 go2_eval.py -e go2-walking --ckpt 'check_point_number'
 """
