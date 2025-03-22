@@ -11,10 +11,10 @@ See the LICENSE file in the project root for the full license text.
 #include <iostream>
 #include <fstream>
 
-#define DEFAULT_URDF_PATH "robot.urdf"
-#define DEFAULT_GAIT_CONFIG_PATH "gait_config.yaml"
-#define DEFAULT_JOINTS_MAP_PATH "joints_map.yaml"
-#define DEFAULT_LINKS_MAP_PATH "links_map.yaml"
+#include "default_robot_urdf.h"  // default_urdf_string
+#include "default_gait_config.h" // default_gait_yaml
+#include "default_joints_map.h" // default_joints_yaml
+#include "default_links_map.h" // default_links_yaml
 
 champ::PhaseGenerator::Time stdTimeToChampTime(const std::chrono::steady_clock::time_point& time) {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(time.time_since_epoch());
@@ -37,10 +37,10 @@ QuadrupedController::QuadrupedController():
 
     try
     {
-        setURDFfromFile(DEFAULT_URDF_PATH);
-        setGaitConfig(DEFAULT_GAIT_CONFIG_PATH);
-        setJointsMap(DEFAULT_JOINTS_MAP_PATH);
-        setLinksMap(DEFAULT_LINKS_MAP_PATH);
+        setURDFfromFile(default_urdf_string);
+        setGaitConfig(default_gait_yaml);
+        setJointsMap(default_joints_yaml);
+        setLinksMap(default_links_yaml);
     }
     catch(const std::exception& e)
     {
@@ -70,19 +70,17 @@ std::array<float, NUM_JOINTS> QuadrupedController::getJointPositions(){
     return joint_arr;
 }
 
-void QuadrupedController::setURDFfromFile(std::string urdf_path){
-    std::string urdf_file_path = urdf_path;
-    std::ifstream urdf_file(urdf_file_path);
-
-    if (!urdf_file.is_open()) {
-        std::cerr << "Failed to open URDF file: " << urdf_file_path << std::endl;
+void QuadrupedController::setURDFfromFile(std::string input){
+    std::ifstream urdf_file(input);
+    if (urdf_file.good()) {
+        std::stringstream urdf_buffer;
+        urdf_buffer << urdf_file.rdbuf();
+        urdf = urdf_buffer.str();
+        urdf_file.close();
+    } else{
+        std::cout << "using embedded default URDF." << std::endl;
+        urdf = input;
     }
-
-    std::stringstream urdf_buffer;
-    urdf_buffer << urdf_file.rdbuf();
-    urdf = urdf_buffer.str();
-
-    urdf_file.close();
 }
 
 void QuadrupedController::setGaitConfig(const std::string& file_path) {

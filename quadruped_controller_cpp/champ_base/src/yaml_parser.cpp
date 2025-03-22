@@ -6,16 +6,29 @@ See the LICENSE file in the project root for the full license text.
 */
 
 #include "yaml_parser.h"
+#include <fstream>
+#include <iostream>
 
-std::map<std::string, std::variant<bool, double>> getGaitYaml(const std::string& file_path) {
+std::map<std::string, std::variant<bool, double>> getGaitYaml(const std::string& input) {
     std::map<std::string, std::variant<bool, double>> gait_config;
     YAML::Node config;
+    std::ifstream file(input);
 
-    try {
-        config = YAML::LoadFile(file_path);
-    } catch (const YAML::Exception& e) {
-        std::cerr << "Error loading YAML file: " << e.what() << "\n";
-        return gait_config;
+    if (file.good()) {
+        try {
+            config = YAML::LoadFile(input);
+        } catch (const YAML::Exception& e) {
+            std::cerr << "Error loading YAML file: " << e.what() << "\n";
+            return gait_config;
+        }
+    } else {
+        std::cout << "Using embedded default gait config YAML." << std::endl;
+        try {
+            config = YAML::Load(input);
+        } catch (const YAML::Exception& e) {
+            std::cerr << "Error loading embedded YAML: " << e.what() << "\n";
+            return gait_config;
+        }
     }
 
     if (config["gait_config"]) {
@@ -39,14 +52,26 @@ std::map<std::string, std::variant<bool, double>> getGaitYaml(const std::string&
     return gait_config;
 }
 
-std::vector<std::string> getJointsYaml(const std::string& file_path) {
+std::vector<std::string> getJointsYaml(const std::string& input) {
     std::vector<std::string> joint_names;
     YAML::Node config;
-    try {
-        config = YAML::LoadFile(file_path);
-    } catch (const YAML::Exception& e) {
-        std::cerr << "Error loading YAML file: " << e.what() << "\n";
-        return joint_names;
+    std::ifstream file(input);
+    
+    if (file.good()) {
+        try {
+            config = YAML::LoadFile(input);
+        } catch (const YAML::Exception& e) {
+            std::cerr << "Error loading YAML file: " << e.what() << "\n";
+            return joint_names;
+        }
+    } else {
+        std::cout << "Using embedded default joints YAML." << std::endl;
+        try {
+            config = YAML::Load(input);
+        } catch (const YAML::Exception& e) {
+            std::cerr << "Error loading embedded YAML: " << e.what() << "\n";
+            return joint_names;
+        }
     }
 
     if (config["joints_map"]) {
@@ -60,14 +85,26 @@ std::vector<std::string> getJointsYaml(const std::string& file_path) {
 }
 
 
-std::vector<std::vector<std::string>> getLinksYaml(const std::string& file_path) {
+std::vector<std::vector<std::string>> getLinksYaml(const std::string& input) {
     std::vector<std::vector<std::string>> links_map;
     YAML::Node config;
-    try {
-        config = YAML::LoadFile(file_path);
-    } catch (const YAML::Exception& e) {
-        std::cerr << "Error loading YAML file: " << e.what() << "\n";
-        return links_map;
+    std::ifstream file(input);
+    
+    if (file.good()) {
+        try {
+            config = YAML::LoadFile(input);
+        } catch (const YAML::Exception& e) {
+            std::cerr << "Error loading YAML file: " << e.what() << "\n";
+            return links_map;
+        }
+    } else {
+        std::cout << "Using embedded default links YAML." << std::endl;
+        try {
+            config = YAML::Load(input);
+        } catch (const YAML::Exception& e) {
+            std::cerr << "Error loading embedded YAML: " << e.what() << "\n";
+            return links_map;
+        }
     }
 
     if (config["links_map"]) {

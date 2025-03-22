@@ -14,10 +14,20 @@ set(GAIT_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/gait_config.yaml")
 set(JOINTS_MAP_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/joints_map.yaml")
 set(LINKS_MAP_FILE "${CMAKE_CURRENT_SOURCE_DIR}/resource/links_map.yaml")
 
-configure_file(${URDF_FILE} ${CMAKE_CURRENT_BINARY_DIR}/resource/robot_urdf.h COPYONLY)
-configure_file(${GAIT_CONFIG_FILE} ${CMAKE_CURRENT_BINARY_DIR}/resource/gait_config.h COPYONLY)
-configure_file(${JOINTS_MAP_FILE} ${CMAKE_CURRENT_BINARY_DIR}/resource/joints_map.h COPYONLY)
-configure_file(${LINKS_MAP_FILE} ${CMAKE_CURRENT_BINARY_DIR}/resource/links_map.h COPYONLY)
+function(embed_file_as_header INPUT_FILE OUTPUT_HEADER VARIABLE_NAME)
+  file(READ "${INPUT_FILE}" FILE_CONTENT)
+  string(REPLACE "\\" "\\\\" FILE_CONTENT "${FILE_CONTENT}")
+  string(REPLACE "\"" "\\\"" FILE_CONTENT "${FILE_CONTENT}")
+  string(REPLACE "\n" "\\n\"\n\"" FILE_CONTENT "${FILE_CONTENT}")
+  file(WRITE "${OUTPUT_HEADER}" "const char* ${VARIABLE_NAME} = \"${FILE_CONTENT}\";\n")
+endfunction()
+
+embed_file_as_header(${URDF_FILE} ${CMAKE_CURRENT_BINARY_DIR}/default_robot_urdf.h default_urdf_string)
+embed_file_as_header(${GAIT_CONFIG_FILE} ${CMAKE_CURRENT_BINARY_DIR}/default_gait_config.h default_gait_yaml)
+embed_file_as_header(${JOINTS_MAP_FILE} ${CMAKE_CURRENT_BINARY_DIR}/default_joints_map.h default_joints_yaml)
+embed_file_as_header(${LINKS_MAP_FILE} ${CMAKE_CURRENT_BINARY_DIR}/default_links_map.h default_links_yaml)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 pybind11_add_module(quadruped_controller 
   src/quadruped_controller.cpp
@@ -31,6 +41,7 @@ set_target_properties(quadruped_controller PROPERTIES
 
 target_include_directories(quadruped_controller PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${urdf_INCLUDE_DIRS}
   ${Python3_INCLUDE_DIRS}
   /usr/local/include/champ
