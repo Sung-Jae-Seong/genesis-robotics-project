@@ -72,11 +72,9 @@ controller.setVelocityCommand(0, 0, 0)
 import time
 start = time.time()
 
-last_time = time.time() 
 while True:
 # 첫 번째 point의 position 값 추출
     positions = controller.getJointPositions()
-
     # Genesis 로봇에 목표 위치 설정
     robot.control_dofs_position(
         position=np.array(positions),

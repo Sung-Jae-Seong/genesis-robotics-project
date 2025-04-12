@@ -1,12 +1,13 @@
 import torch
 import math
+import numpy as np
 import genesis as gs
 from genesis.utils.geom import quat_to_xyz, transform_by_quat, inv_quat, transform_quat_by_quat
 
+from quadruped_controller import QuadrupedController
 
 def gs_rand_float(lower, upper, shape, device):
     return (upper - lower) * torch.rand(size=shape, device=device) + lower
-
 
 class Go2Env:
     def __init__(self, num_envs, env_cfg, obs_cfg, reward_cfg, command_cfg, show_viewer=False, device="cuda"):
@@ -25,7 +26,7 @@ class Go2Env:
         self.env_cfg = env_cfg #환경 관련 설정(액션개수, 종료조건, 초기 설정 등)
         self.obs_cfg = obs_cfg #관찰 관련 설정(로봇의 선속도, 각속도, 상대위치 등)
         self.reward_cfg = reward_cfg #보상관련 설정
-        self.command_cfg = command_cfg #로봇이 받을 명령
+        self.command_cfg = command_cfg #로봇이 받을 명령(목표)
 
         self.obs_scales = obs_cfg["obs_scales"] #관찰값 정규화
         self.reward_scales = reward_cfg["reward_scales"] #보상 정규화
@@ -76,9 +77,19 @@ class Go2Env:
         # names to indices
         self.motor_dofs = [self.robot.get_joint(name).dof_idx_local for name in self.env_cfg["dof_names"]]
 
+        num_dofs = len(self.motor_dofs)
         # PD control parameters
-        self.robot.set_dofs_kp([self.env_cfg["kp"]] * self.num_actions, self.motor_dofs)
-        self.robot.set_dofs_kv([self.env_cfg["kd"]] * self.num_actions, self.motor_dofs)
+        force_lower_bound = np.array([-100] * len(self.motor_dofs))  # 최소 출력
+        force_upper_bound = np.array([500] * len(self.motor_dofs))   # 최대 출력
+        self.robot.set_dofs_force_range(
+            lower=force_lower_bound,
+            upper=force_upper_bound,
+            dofs_idx_local=self.motor_dofs
+        )
+        self.robot.set_dofs_kp([self.env_cfg["kp"]] * num_dofs, self.motor_dofs)
+        self.robot.set_dofs_kv([self.env_cfg["kd"]] * num_dofs, self.motor_dofs)
+
+        self.controllers = [QuadrupedController() for i in range(self.num_envs)]
 
         # prepare reward functions and multiply reward scales by dt
         self.reward_functions, self.episode_sums = dict(), dict() # = 보상 함수를 저장하는 딕셔너리, 에피소드의 보상의 누적 합을 저장하는 딕셔너리.
@@ -92,24 +103,25 @@ class Go2Env:
         self.base_ang_vel = torch.zeros((self.num_envs, 3), device=self.device, dtype=gs.tc_float) #각 환경마다 3축(x, y, z)을 기준으로 회전 속도를 저장.
         self.projected_gravity = torch.zeros((self.num_envs, 3), device=self.device, dtype=gs.tc_float) #로봇 기준 좌표계에서의 중력 벡터, (x, y, z)
         self.global_gravity = torch.tensor([0.0, 0.0, -1.0], device=self.device, dtype=gs.tc_float).repeat( #전역(월드 좌표계)에서의 중력 방향
-            self.num_envs, 1 #z 방향(-1.0)으로 중력이 작용하는 일반적인 중력 가속도(9.81m/s²을 정규화하여 -1.0으로 표현).
+            self.num_envs, 1
         )
+        #z 방향(-1.0)으로 중력이 작용하는 일반적인 중력 가속도(9.81m/s²을 정규화하여 -1.0으로 표현).
         self.obs_buf = torch.zeros((self.num_envs, self.num_obs), device=self.device, dtype=gs.tc_float)  #로봇의 관찰값을 저장
         self.rew_buf = torch.zeros((self.num_envs,), device=self.device, dtype=gs.tc_float) # 각 환경에서 받은 보상을 저장
         self.reset_buf = torch.ones((self.num_envs,), device=self.device, dtype=gs.tc_int) # 환경 리셋 여부(1이면 리셋, 0이면 계속)
         self.episode_length_buf = torch.zeros((self.num_envs,), device=self.device, dtype=gs.tc_int) # 환경마다 경과한 시간
         self.commands = torch.zeros((self.num_envs, self.num_commands), device=self.device, dtype=gs.tc_float) # 로봇이 수행해야할 명령(위치, 속도, 자세 등)
         self.commands_scale = torch.tensor( # 명령값을 정규화하기 하기 위한 스케일을 저장
-            [self.obs_scales["lin_vel"], self.obs_scales["lin_vel"], self.obs_scales["ang_vel"]],
+            [self.obs_scales["lin_vel"], ],
             device=self.device,
             dtype=gs.tc_float,
         )
-        self.actions = torch.zeros((self.num_envs, self.num_actions), device=self.device, dtype=gs.tc_float) # 현재 드론이 수행한 액션
-        self.last_actions = torch.zeros_like(self.actions)  # 이전 시간 스텝에서 드론이 수행한 액션
-        # 현재&이전 액션 -> 드론이 얼마나 부드럽게 움직이는지를 평가하는 스무딩 보상(Smooth Reward) 계산에 사용됨
-        self.dof_pos = torch.zeros_like(self.actions) #	현재 관절 위치 (joint position)
-        self.dof_vel = torch.zeros_like(self.actions) #	현재 관절 속도 (joint velocity)
-        self.last_dof_vel = torch.zeros_like(self.actions) # 이전 스텝의 관절 속도
+        self.actions = torch.zeros((self.num_envs, self.num_actions), device=self.device, dtype=gs.tc_float) # 현재 로봇이 수행한 액션
+        self.last_actions = torch.zeros_like(self.actions)  # 이전 시간 스텝에서 로봇이 수행한 액션
+        # 현재&이전 액션 -> 로봇이 얼마나 부드럽게 움직이는지를 평가하는 스무딩 보상(Smooth Reward) 계산에 사용됨
+        self.dof_pos = torch.zeros((self.num_envs, num_dofs), device=self.device, dtype=gs.tc_float) #	현재 관절 위치 (joint position)
+        self.dof_vel = torch.zeros((self.num_envs, num_dofs), device=self.device, dtype=gs.tc_float) #	현재 관절 속도 (joint velocity)
+        self.last_dof_vel = torch.zeros((self.num_envs, num_dofs), device=self.device, dtype=gs.tc_float) # 이전 스텝의 관절 속도
         self.base_pos = torch.zeros((self.num_envs, 3), device=self.device, dtype=gs.tc_float) # 로봇 베이스의 위치 (x, y, z)
         self.base_quat = torch.zeros((self.num_envs, 4), device=self.device, dtype=gs.tc_float) # 로봇 베이스의 자세 (쿼터니언)
         self.default_dof_pos = torch.tensor( # 초기 관절 위치 (로봇의 기본 포즈)
@@ -117,12 +129,20 @@ class Go2Env:
             device=self.device,
             dtype=gs.tc_float,
         )
+        self.robot.set_dofs_position(
+            position=self.dof_pos * num_envs,
+            dofs_idx_local=self.motor_dofs,
+            zero_velocity=True,
+        )
+
+        self.x_lin_vel = torch.zeros((self.num_envs,), device=self.device, dtype=gs.tc_float)
+
+        self.last_base_pos = torch.zeros((self.num_envs, 3), device=self.device, dtype=gs.tc_float)
+
         self.extras = dict()  # extra information for logging
 
     def _resample_commands(self, envs_idx):  # 로봇이 수행해야 하는 명령(command)를 생성함 (로봇의 목표)
         self.commands[envs_idx, 0] = gs_rand_float(*self.command_cfg["lin_vel_x_range"], (len(envs_idx),), self.device)
-        self.commands[envs_idx, 1] = gs_rand_float(*self.command_cfg["lin_vel_y_range"], (len(envs_idx),), self.device)
-        self.commands[envs_idx, 2] = gs_rand_float(*self.command_cfg["ang_vel_range"], (len(envs_idx),), self.device)
 
     def step(self, actions):
         self.actions = torch.clip(actions, -self.env_cfg["clip_actions"], self.env_cfg["clip_actions"]) #행동의 범위 제한
@@ -131,15 +151,40 @@ class Go2Env:
         # 로봇의 실제 환경에서는 신호 전달 지연이 발생할 수 있음.
         # 로봇의 모터에 명령을 보내면 즉시 적용되지 않고 약간의 지연(delay)이 존재함.
         # 이를 반영하기 위해 simulate_action_latency=True인 경우 이전 스텝의 행동(last_actions)을 그대로 실행.
-        target_dof_pos = exec_actions * self.env_cfg["action_scale"] + self.default_dof_pos # 목표 관절 위치 설정
+        # target_dof_pos = exec_actions * self.env_cfg["action_scale"] + self.default_dof_pos # 목표 관절 위치 설정
         # 네트워크가 예측한 행동(exec_actions)에 스케일 값을 곱하여 실제 관절 움직임의 크기를 조정.
         # 기본적인 관절 위치(self.default_dof_pos)를 기준으로 행동값을 적용.
-        self.robot.control_dofs_position(target_dof_pos, self.motor_dofs) # 로봇을 실제로 움직임
+        # self.robot.control_dofs_position(target_dof_pos, self.motor_dofs) # 로봇을 실제로 움직임
+        speed = exec_actions[:, 0]
+        positions_list = []
+
+        for i in range(self.num_envs):
+            self.controllers[i].setVelocityCommand(1, 0, 0)
+            # 각 env의 QuadrupedController에 보행 파라미터를 적용
+            self.controllers[i].setSpeedValue(float(speed[i]))
+            # Controller가 계산한 관절 각도 가져오기
+            pos_i = self.controllers[i].getJointPositions()
+            positions_list.append(pos_i)
+
+        # print(self.controllers[i].getJointPositions())
+
+        # positions_array : shape (num_envs, n_joints)
+        positions_array = np.array(positions_list, dtype=np.float32)
+
+        # 5) 병렬 모드로 모든 env의 관절을 한꺼번에 제어
+        #    (envs_idx=None 이면 전체 env에 대해 shape (num_envs, n_joints)를 적용)
+        self.robot.control_dofs_position(
+            position=positions_array,
+            dofs_idx_local=self.motor_dofs,
+            envs_idx=None
+        )
+
         self.scene.step()
 
         # update buffers
         self.episode_length_buf += 1 # 에피소드 스텝 저장 -> threshold값을 넘으면 자동 종료
         self.base_pos[:] = self.robot.get_pos() # pos update
+        self.last_base_pos[:] = self.base_pos[:]
         self.base_quat[:] = self.robot.get_quat() # pos update
         self.base_euler = quat_to_xyz( #오일려 변환
             transform_quat_by_quat(torch.ones_like(self.base_quat) * self.inv_base_init_quat, self.base_quat)
@@ -184,7 +229,8 @@ class Go2Env:
         self.obs_buf = torch.cat( # 관찰값을 하나의 텐서로 변환 / 로봇에게 입력되는 값
             [
                 #관찰값, 모델인풋
-                #self.actions,
+                self.actions * self.obs_scales["actions"], #1
+                self.base_lin_vel[:, 0:1] * self.obs_scales["lin_vel"]#1
             ],
             axis=-1,
         )
@@ -204,6 +250,9 @@ class Go2Env:
     def reset_idx(self, envs_idx):
         if len(envs_idx) == 0:
             return
+        for i in envs_idx:
+            self.controllers[i].setSpeedValue(0.0)
+            self.controllers[i].setVelocityCommand(0, 0, 0)
 
         # reset dofs
         self.dof_pos[envs_idx] = self.default_dof_pos
@@ -217,6 +266,7 @@ class Go2Env:
 
         # reset base
         self.base_pos[envs_idx] = self.base_init_pos
+        self.last_base_pos[:] = self.base_pos[:]
         self.base_quat[envs_idx] = self.base_init_quat.reshape(1, -1)
         self.robot.set_pos(self.base_pos[envs_idx], zero_velocity=False, envs_idx=envs_idx)
         self.robot.set_quat(self.base_quat[envs_idx], zero_velocity=False, envs_idx=envs_idx)
@@ -247,4 +297,16 @@ class Go2Env:
         return self.obs_buf, None
 
     # ------------ reward functions----------------
-    #def _reward_보상_이름(self):
+    def _reward_tracking_lin_vel(self):
+        # Tracking of linear velocity commands (xy axes)
+        lin_vel_error = torch.sum(torch.square(self.commands[:, :2] - self.base_lin_vel[:, :2]), dim=1)
+        # 로봇이 요구된 선속도(commands[:, :2])를 정확하게 따라가도록 보상을 부여.
+        # 오차가 작을수록 보상을 크게 하기 위해 지수 함수(exp)를 사용하여 부드럽게 감소.
+        return torch.exp(-lin_vel_error / self.reward_cfg["tracking_sigma"])
+
+    def _reward_no_movement_penalty(self):
+        # 현재 스텝과 이전 스텝의 x축 위치 차이 계산
+        x_pos_diff = torch.abs(self.base_pos[:, 0] - self.last_base_pos[:, 0])
+        # 위치 변화가 거의 없으면 패널티 부여 (0.01m 이하 움직이면 패널티)
+        penalty = torch.where(x_pos_diff < self.reward_cfg["no_movement_threshold"], torch.tensor(1.0, device=self.device), torch.tensor(0.0, device=self.device))
+        return penalty

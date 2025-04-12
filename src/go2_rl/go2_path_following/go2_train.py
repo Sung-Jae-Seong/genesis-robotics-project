@@ -34,8 +34,8 @@ def get_train_cfg(exp_name, max_iterations):
         "init_member_classes": {}, # 사용자가 임의로 추가할 강화학습 모듈이나 알고리즘...
         "policy": {
             "activation": "elu", # 활성 함수
-            "actor_hidden_dims": [512, 256, 128], # 정책 네트워크 크기 -> 정책(행동)을 선택
-            "critic_hidden_dims": [512, 256, 128], # 가치 네트워크 크기 -> 현재 상태에 대한 판단
+            "actor_hidden_dims": [128, 128], # 정책 네트워크 크기 -> 정책(행동)을 선택
+            "critic_hidden_dims": [128, 128], # 가치 네트워크 크기 -> 현재 상태에 대한 판단
             "init_noise_std": 1.0, # 초기 노이즈 표준편차 (탐색을 위해 초기 액션 분포에 적용, 보통 init_noise_std < 2.0)
         },
         "runner": {
@@ -63,21 +63,22 @@ def get_train_cfg(exp_name, max_iterations):
 
 def get_cfgs():
     env_cfg = {
-        "num_actions": 12, # 12개의 joint -> 내가 만든 함수로 대체
+        "num_actions": 1, # 12개의 joint -> quadruped_controller로 대체
         # joint/link names
         "default_joint_angles": {  # [rad]
-            "FL_hip_joint": 0.0,
-            "FR_hip_joint": 0.0,
-            "RL_hip_joint": 0.0,
-            "RR_hip_joint": 0.0,
-            "FL_thigh_joint": 0.8,
-            "FR_thigh_joint": 0.8,
-            "RL_thigh_joint": 1.0,
-            "RR_thigh_joint": 1.0,
-            "FL_calf_joint": -1.5,
-            "FR_calf_joint": -1.5,
-            "RL_calf_joint": -1.5,
-            "RR_calf_joint": -1.5,
+            # 주어진 배열 12개 값이 dof_names 순서에 정확히 대응되도록 매핑
+            "FR_hip_joint":   1.5893254712295857e-08,
+            "FR_thigh_joint": 1.0143535137176514,
+            "FR_calf_joint": -2.0287070274353027,
+            "FL_hip_joint":  -1.0331603306212855e-07,
+            "FL_thigh_joint": 1.0143535137176514,
+            "FL_calf_joint": -2.0287070274353027,
+            "RR_hip_joint":   1.5893254712295857e-08,
+            "RR_thigh_joint": 1.0143535137176514,
+            "RR_calf_joint": -2.0287070274353027,
+            "RL_hip_joint":  -1.0331603306212855e-07,
+            "RL_thigh_joint": 1.0143535137176514,
+            "RL_calf_joint": -2.0287070274353027,
         },
         "dof_names": [
             "FR_hip_joint",
@@ -94,13 +95,13 @@ def get_cfgs():
             "RL_calf_joint",
         ],
         # PD
-        "kp": 20.0,
-        "kd": 0.5,
+        "kp": 250.0,
+        "kd": 6,
         # termination -> 경로를 크게 벗어나는 것 추가
-        "termination_if_roll_greater_than": 10,  # degree
-        "termination_if_pitch_greater_than": 10,
+        "termination_if_roll_greater_than": 30,  # degree
+        "termination_if_pitch_greater_than": 30,
         # base pose
-        "base_init_pos": [0.0, 0.0, 0.42],
+        "base_init_pos": [0.0, 0.0, 0.40],
         "base_init_quat": [1.0, 0.0, 0.0, 0.0],
         "episode_length_s": 20.0,
         "resampling_time_s": 4.0,
@@ -109,20 +110,23 @@ def get_cfgs():
         "clip_actions": 100.0, #수정
     }
     obs_cfg = {
-        "num_obs": 1, #로봇이 관찰할 파라미터 개수
+        "num_obs": 2, #로봇이 관찰할 파라미터 개수
         "obs_scales": {  #예를 들어, 속도 값이 3.0인데 관절 위치 값이 0.1이면, 신경망이 상대적으로 속도를 더 중요한 값으로 인식할 가능성이 높아짐.
-            "관찰값1" : 1.0
+            "lin_vel" : 1.0,
+            "actions" : 1.0
         },
     }
     reward_cfg = { # 경로 도착이나 관련 보상 추가
-        "보상함수에 필요한 계수를 설정" : 1.0,
+        "tracking_sigma": 0.25,
+        "no_movement_threshold": 0.01,
         "reward_scales": {
-            "reward_func_name" : 1.0,
+            "tracking_lin_vel" : 1.0,
+            "no_movement_penalty": -0.1 # 수정후보
         },
     }
     command_cfg = { # 로봇이 받을 명령 -> 경로
         "num_commands": 1,
-        "로봇이 받을 명령 1": [0.5, 0.5], #명령의 범위
+        "lin_vel_x_range": [0.3, 0.3], #명령의 범위
     }
 
     return env_cfg, obs_cfg, reward_cfg, command_cfg
