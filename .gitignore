@@ -8,3 +8,4 @@ __pycache__/
 note/
 logs/
 thirdparty/
+quadruped_controller.so

@@ -78,7 +78,6 @@ void QuadrupedController::setURDFfromFile(std::string input){
         urdf = urdf_buffer.str();
         urdf_file.close();
     } else{
-        std::cout << "using embedded default URDF." << std::endl;
         urdf = input;
     }
 }

@@ -22,7 +22,6 @@ std::map<std::string, std::variant<bool, double>> getGaitYaml(const std::string&
             return gait_config;
         }
     } else {
-        std::cout << "Using embedded default gait config YAML." << std::endl;
         try {
             config = YAML::Load(input);
         } catch (const YAML::Exception& e) {
@@ -65,7 +64,6 @@ std::vector<std::string> getJointsYaml(const std::string& input) {
             return joint_names;
         }
     } else {
-        std::cout << "Using embedded default joints YAML." << std::endl;
         try {
             config = YAML::Load(input);
         } catch (const YAML::Exception& e) {
@@ -98,7 +96,6 @@ std::vector<std::vector<std::string>> getLinksYaml(const std::string& input) {
             return links_map;
         }
     } else {
-        std::cout << "Using embedded default links YAML." << std::endl;
         try {
             config = YAML::Load(input);
         } catch (const YAML::Exception& e) {
