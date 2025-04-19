@@ -15,12 +15,12 @@ def get_train_cfg(exp_name, max_iterations):
         "algorithm": {
             "clip_param": 0.2, # PPO의 클리핑 파라미터 (0.2 → 급격한 학습 제한)
             "desired_kl": 0.01, # KL divergence = 새로운 정책과 기존 정책 간의 차이 / ex. 0.01보다 크다면 학습률을 낮춤(학습 안정화) 
-            "entropy_coef": 0.01, # 정책 탐색 다양성을 위한 엔트로피 보상 계수 (다양한 행동 시도)
+            "entropy_coef": 0.005, # 정책 탐색 다양성을 위한 엔트로피 보상 계수 (다양한 행동 시도)
             "gamma": 0.99, # 0.99 → 미래의 보상 고려
             "lam": 0.95,  # 1.0 : fully montecarlo -> 먼 미래 반영 / 0.0 : fullt TD -> 단기적인 보상 (주로 0.9~0.97 사이)
             # montecarlo : 에피소드가 끝나면 모든 보상을 누적하여 한 번에 학습(편향 방지)
             # TD : 다음 상태에서 보상을 추정하여 가중치 업데이트
-            "learning_rate": 0.001, 
+            "learning_rate": 0.0005, 
             "max_grad_norm": 1.0,  # 그래디언트 클리핑 값 (1.0) -> 급격한 학습 방지
             "num_learning_epochs": 5, # 학습 반복 횟수 -> 데이터 수집 후 학습 횟수
             "num_mini_batches": 4, # 미니배치 개수
@@ -63,7 +63,7 @@ def get_train_cfg(exp_name, max_iterations):
 
 def get_cfgs():
     env_cfg = {
-        "num_actions": 1, # 12개의 joint -> quadruped_controller로 대체
+        "num_actions": 4, # 12개의 joint -> quadruped_controller로 대체
         # joint/link names
         "default_joint_angles": {  # [rad]
             # 주어진 배열 12개 값이 dof_names 순서에 정확히 대응되도록 매핑
@@ -98,19 +98,19 @@ def get_cfgs():
         "kp": 250.0,
         "kd": 6,
         # termination -> 경로를 크게 벗어나는 것 추가
-        "termination_if_roll_greater_than": 30,  # degree
-        "termination_if_pitch_greater_than": 30,
+        "termination_if_roll_greater_than": 20,  # degree
+        "termination_if_pitch_greater_than": 20,
         # base pose
-        "base_init_pos": [0.0, 0.0, 0.40],
+        "base_init_pos": [0.0, 0.0, 0.45],
         "base_init_quat": [1.0, 0.0, 0.0, 0.0],
         "episode_length_s": 20.0,
         "resampling_time_s": 4.0,
         "action_scale": 0.25, #수정
         "simulate_action_latency": True,
-        "clip_actions": 100.0, #수정
+        "clip_actions": 0.5, #수정
     }
     obs_cfg = {
-        "num_obs": 2, #로봇이 관찰할 파라미터 개수
+        "num_obs": 5, #로봇이 관찰할 파라미터 개수
         "obs_scales": {  #예를 들어, 속도 값이 3.0인데 관절 위치 값이 0.1이면, 신경망이 상대적으로 속도를 더 중요한 값으로 인식할 가능성이 높아짐.
             "lin_vel" : 1.0,
             "actions" : 1.0
@@ -121,12 +121,17 @@ def get_cfgs():
         "no_movement_threshold": 0.01,
         "reward_scales": {
             "tracking_lin_vel" : 1.0,
-            "no_movement_penalty": -0.1 # 수정후보
+            "tracking_ang_vel" : 1.0,
+            "no_movement_penalty": -0.2,
+            "lin_vel_z" : -5.0,
+            "ang_vel_yaw": -0.1
         },
     }
     command_cfg = { # 로봇이 받을 명령 -> 경로
-        "num_commands": 1,
+        "num_commands": 3,
         "lin_vel_x_range": [0.3, 0.3], #명령의 범위
+        "lin_vel_y_range": [0.0, 0.0],
+        "ang_vel_yaw_range": [0.0, 0.0],
     }
 
     return env_cfg, obs_cfg, reward_cfg, command_cfg
