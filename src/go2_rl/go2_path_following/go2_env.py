@@ -120,6 +120,7 @@ class Go2Env:
         self.last_actions = torch.zeros_like(self.actions)  # 이전 시간 스텝에서 로봇이 수행한 액션
         # 현재&이전 액션 -> 로봇이 얼마나 부드럽게 움직이는지를 평가하는 스무딩 보상(Smooth Reward) 계산에 사용됨
         self.dof_pos = torch.zeros((self.num_envs, num_dofs), device=self.device, dtype=gs.tc_float) #	현재 관절 위치 (joint position)
+        self.prev_dofs = torch.zeros((self.num_envs, num_dofs), device=self.device, dtype=gs.tc_float)
         self.dof_vel = torch.zeros((self.num_envs, num_dofs), device=self.device, dtype=gs.tc_float) #	현재 관절 속도 (joint velocity)
         self.last_dof_vel = torch.zeros((self.num_envs, num_dofs), device=self.device, dtype=gs.tc_float) # 이전 스텝의 관절 속도
         self.base_pos = torch.zeros((self.num_envs, 3), device=self.device, dtype=gs.tc_float) # 로봇 베이스의 위치 (x, y, z)
@@ -157,15 +158,15 @@ class Go2Env:
         # 네트워크가 예측한 행동(exec_actions)에 스케일 값을 곱하여 실제 관절 움직임의 크기를 조정.
         # 기본적인 관절 위치(self.default_dof_pos)를 기준으로 행동값을 적용.
         # self.robot.control_dofs_position(target_dof_pos, self.motor_dofs) # 로봇을 실제로 움직임
-        speed_torch = exec_actions[:, 0]
-        lin_vel_x_torch = exec_actions[:, 1]
-        lin_vel_y_torch = exec_actions[:, 2]
-        ang_vel_z_torch = exec_actions[:, 3]
-        # swing_height_torch = exec_actions[:, 4]
-        # stance_depth_torch = exec_actions[:, 5]
-        # stance_duration_torch = exec_actions[:, 6]
-        # nominal_height_torch = exec_actions[:, 7]
-        
+        speed_torch = exec_actions[:, 0] * 0.1
+        lin_vel_x_torch = exec_actions[:, 1] * 0.25
+        lin_vel_y_torch = exec_actions[:, 2] * 0.25
+        ang_vel_z_torch = exec_actions[:, 3] * 0.25
+        swing_height_torch = (exec_actions[:, 4]+self.env_cfg["clip_actions"]) * 0.008 
+        stance_depth_torch = (exec_actions[:, 5]+self.env_cfg["clip_actions"]) * 0.002
+        stance_duration_torch = (exec_actions[:, 6]+self.env_cfg["clip_actions"]) * 0.05
+        nominal_height_torch = (exec_actions[:, 7]+self.env_cfg["clip_actions"]) * 0.045
+        # print(exec_actions)
         positions_list = []
 
         for i in range(self.num_envs):
@@ -173,18 +174,18 @@ class Go2Env:
             lin_vel_x = lin_vel_x_torch[i]
             lin_vel_y = lin_vel_y_torch[i]
             ang_vel_z = ang_vel_z_torch[i]
-            # swing_height = swing_height_torch[i]
-            # stance_depth = stance_depth_torch[i]
-            # stance_duration = stance_duration_torch[i]
-            # nominal_height = nominal_height_torch[i]
+            swing_height = swing_height_torch[i]
+            stance_depth = stance_depth_torch[i]
+            stance_duration = stance_duration_torch[i]
+            nominal_height = nominal_height_torch[i]
             
             # 각 env의 QuadrupedController에 보행 파라미터를 적용
             self.controllers[i].setVelocityCommand(lin_vel_x, lin_vel_y, ang_vel_z)
             self.controllers[i].setSpeedValue(speed)
-            # self.controllers[i].setSwingHeight(swing_height)
-            # self.controllers[i].setStanceDepth(stance_depth)
-            # self.controllers[i].setStanceDuration(stance_duration)
-            # self.controllers[i].setNominalHeight(nominal_height)
+            self.controllers[i].setSwingHeight(swing_height)
+            self.controllers[i].setStanceDepth(stance_depth)
+            self.controllers[i].setStanceDuration(stance_duration)
+            self.controllers[i].setNominalHeight(nominal_height)
             # Controller가 계산한 관절 각도 가져오기
             pos_i = self.controllers[i].getJointPositions()
             positions_list.append(pos_i)
@@ -251,14 +252,19 @@ class Go2Env:
         self.obs_buf = torch.cat( # 관찰값을 하나의 텐서로 변환 / 로봇에게 입력되는 값
             [
                 #관찰값, 모델인풋
-                self.actions * self.obs_scales["actions"], #1
-                self.base_lin_vel[:, 0:1] * self.obs_scales["lin_vel"]#1
+                self.actions * self.obs_scales["actions"], #8
+                self.base_lin_vel[:] * self.obs_scales["lin_vel"], #3
+                self.base_ang_vel[:] * self.obs_scales["ang_vel"], #3
+                self.base_euler[:] * self.obs_scales["euler"], #3
+                self.commands * 0.1, #3
+                self.projected_gravity * 0.1#3
             ],
             axis=-1,
         )
 
         self.last_actions[:] = self.actions[:]
         self.last_dof_vel[:] = self.dof_vel[:]
+        self.prev_dofs[:] = self.dof_pos[:]
 
         return self.obs_buf, None, self.rew_buf, self.reset_buf, self.extras
 
@@ -332,10 +338,14 @@ class Go2Env:
         return torch.exp(-ang_vel_error / self.reward_cfg["tracking_sigma"])
 
     def _reward_no_movement_penalty(self):
-        # 현재 스텝과 이전 스텝의 x축 위치 차이 계산
-        x_pos_diff = torch.abs(self.base_pos[:, 0] - self.last_base_pos[:, 0])
-        # 위치 변화가 거의 없으면 패널티 부여 (0.01m 이하 움직이면 패널티)
-        penalty = torch.where(x_pos_diff < self.reward_cfg["no_movement_threshold"], torch.tensor(1.0, device=self.device), torch.tensor(0.0, device=self.device))
+        # 현재 스텝과 이전 스텝의 DOF (관절 위치) 차이 계산
+        dof_diff = torch.abs(self.dof_pos - self.prev_dofs)
+        # 각 joint의 평균 변화량 계산 (batch 차원 기준)
+        mean_dof_diff = torch.mean(dof_diff, dim=1)
+        # 변화량이 threshold 이하이면 페널티 부여
+        penalty = torch.where(mean_dof_diff < self.reward_cfg["no_movement_threshold"],
+                            torch.tensor(1.0, device=self.device),
+                            torch.tensor(0.0, device=self.device))
         return penalty
 
     def _reward_lin_vel_z(self):
